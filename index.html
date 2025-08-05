@@ -1,0 +1,1223 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshFruit - Premium Organic Fruits</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        .hover\\:scale-105:hover {
+            transform: scale(1.05);
+        }
+        .product-image {
+            background: linear-gradient(45deg, #f0f9ff, #e0f2fe);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            background-color: #10b981;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <div id="app"></div>
+    <div id="toast" class="toast">Action completed successfully!</div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // App state
+        const appState = {
+            cart: JSON.parse(localStorage.getItem('freshfruit-cart')) || [],
+            favorites: JSON.parse(localStorage.getItem('freshfruit-favorites')) || [],
+            searchTerm: '',
+            selectedCategory: 'all',
+            isCartOpen: false,
+            isMenuOpen: false,
+            currentSlide: 0,
+            checkoutStep: 0,
+            shippingInfo: {
+                firstName: '',
+                lastName: '',
+                email: '',
+                phone: '',
+                address: '',
+                city: '',
+                state: '',
+                zipCode: '',
+                country: 'United States'
+            },
+            paymentInfo: {
+                cardNumber: '',
+                expiryDate: '',
+                cvv: '',
+                cardholderName: ''
+            }
+        };
+
+        // Fruit data with improved images
+        const fruits = JSON.parse(localStorage.getItem('freshfruit-products')) || [
+            {
+                id: 1,
+                name: "Organic Apples",
+                price: 2.99,
+                originalPrice: 3.99,
+                category: "fruits",
+                rating: 4.8,
+                image: "https://images.unsplash.com/photo-1568886220439-7ae4684e18c8?w=500&h=500&fit=crop",
+                description: "Fresh organic apples from local farms. Perfect for snacking or baking.",
+                inStock: true
+            },
+            {
+                id: 2,
+                name: "Premium Bananas",
+                price: 1.49,
+                originalPrice: 1.99,
+                category: "fruits",
+                rating: 4.6,
+                image: "https://images.unsplash.com/photo-1587135753163-6167c1a1ad65?w=500&h=500&fit=crop",
+                description: "Ripe and sweet bananas, perfect for smoothies and desserts.",
+                inStock: true
+            },
+            {
+                id: 3,
+                name: "Juicy Oranges",
+                price: 3.29,
+                originalPrice: 3.99,
+                category: "fruits",
+                rating: 4.7,
+                image: "https://images.unsplash.com/photo-1598135753163-6167c1a1ad65?w=500&h=500&fit=crop",
+                description: "Sun-ripened oranges bursting with vitamin C and natural sweetness.",
+                inStock: true
+            },
+            {
+                id: 4,
+                name: "Strawberry Basket",
+                price: 5.99,
+                originalPrice: 7.99,
+                category: "berries",
+                rating: 4.9,
+                image: "https://images.unsplash.com/photo-1562709634-9a098720ace3?w=500&h=500&fit=crop",
+                description: "Plump, sweet strawberries perfect for desserts and snacking.",
+                inStock: true
+            },
+            {
+                id: 5,
+                name: "Blueberry Pack",
+                price: 4.99,
+                originalPrice: 5.99,
+                category: "berries",
+                rating: 4.5,
+                image: "https://images.unsplash.com/photo-1594172337802-4d0271233828?w=500&h=500&fit=crop",
+                description: "Antioxidant-rich blueberries, great for smoothies and breakfast bowls.",
+                inStock: false
+            },
+            {
+                id: 6,
+                name: "Tropical Mango",
+                price: 3.49,
+                originalPrice: 4.49,
+                category: "tropical",
+                rating: 4.8,
+                image: "https://images.unsplash.com/photo-1623053305164-29f893272e78?w=500&h=500&fit=crop",
+                description: "Sweet and juicy tropical mango, perfect for summer treats.",
+                inStock: true
+            },
+            {
+                id: 7,
+                name: "Pineapple Whole",
+                price: 4.99,
+                originalPrice: 5.99,
+                category: "tropical",
+                rating: 4.4,
+                image: "https://images.unsplash.com/photo-1623053305164-29f893272e78?w=500&h=500&fit=crop",
+                description: "Fresh pineapple with sweet, tangy flavor. Great for grilling and juicing.",
+                inStock: true
+            },
+            {
+                id: 8,
+                name: "Green Grapes",
+                price: 2.79,
+                originalPrice: 3.49,
+                category: "grapes",
+                rating: 4.3,
+                image: "https://images.unsplash.com/photo-1598135753163-6167c1a1ad65?w=500&h=500&fit=crop",
+                description: "Crisp and refreshing green grapes, perfect for snacking.",
+                inStock: true
+            },
+            {
+                id: 9,
+                name: "Red Grapes",
+                price: 2.99,
+                originalPrice: 3.49,
+                category: "grapes",
+                rating: 4.5,
+                image: "https://images.unsplash.com/photo-1598135753163-6167c1a1ad65?w=500&h=500&fit=crop",
+                description: "Sweet and juicy red grapes, perfect for wine or snacking.",
+                inStock: true
+            },
+            {
+                id: 10,
+                name: "Watermelon Slice",
+                price: 6.99,
+                originalPrice: 7.99,
+                category: "melons",
+                rating: 4.6,
+                image: "https://images.unsplash.com/photo-1567013266809-46c907c8a8d7?w=500&h=500&fit=crop",
+                description: "Refreshing watermelon, perfect for hot summer days.",
+                inStock: true
+            },
+            {
+                id: 11,
+                name: "Honeydew Melon",
+                price: 5.49,
+                originalPrice: 6.49,
+                category: "melons",
+                rating: 4.4,
+                image: "https://images.unsplash.com/photo-1567013266809-46c907c8a8d7?w=500&h=500&fit=crop",
+                description: "Sweet and fragrant honeydew melon, great for fruit salads.",
+                inStock: true
+            },
+            {
+                id: 12,
+                name: "Peaches",
+                price: 4.99,
+                originalPrice: 5.99,
+                category: "stone",
+                rating: 4.7,
+                image: "https://images.unsplash.com/photo-1598135753163-6167c1a1ad65?w=500&h=500&fit=crop",
+                description: "Juicy and sweet peaches, perfect for desserts and snacking.",
+                inStock: true
+            }
+        ];
+
+        const categories = [
+            { id: "all", name: "All Fruits", icon: "🍎" },
+            { id: "fruits", name: "Fresh Fruits", icon: "🍏" },
+            { id: "berries", name: "Berries", icon: "🫐" },
+            { id: "tropical", name: "Tropical", icon: "🥭" },
+            { id: "grapes", name: "Grapes", icon: "🍇" },
+            { id: "melons", name: "Melons", icon: "🍉" },
+            { id: "stone", name: "Stone Fruits", icon: "🍑" }
+        ];
+
+        const heroSlides = [
+            {
+                title: "Fresh & Organic Fruits",
+                subtitle: "Delivered to your doorstep",
+                image: "https://images.unsplash.com/photo-1568886220439-7ae4684e18c8?w=1200&h=500&fit=crop"
+            },
+            {
+                title: "Seasonal Harvest",
+                subtitle: "Experience nature's best flavors",
+                image: "https://images.unsplash.com/photo-1598135753163-6167c1a1ad65?w=1200&h=500&fit=crop"
+            },
+            {
+                title: "Farm to Table",
+                subtitle: "Straight from local farms",
+                image: "https://images.unsplash.com/photo-1567013266809-46c907c8a8d7?w=1200&h=500&fit=crop"
+            }
+        ];
+
+        // Save cart to localStorage
+        function saveCart() {
+            localStorage.setItem('freshfruit-cart', JSON.stringify(appState.cart));
+        }
+
+        // Save favorites to localStorage
+        function saveFavorites() {
+            localStorage.setItem('freshfruit-favorites', JSON.stringify(appState.favorites));
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Render functions
+        function renderStars(rating) {
+            const stars = [];
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+
+            for (let i = 0; i < fullStars; i++) {
+                stars.push('<svg class="w-4 h-4 fill-yellow-400 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>');
+            }
+
+            if (hasHalfStar) {
+                stars.push('<svg class="w-4 h-4 fill-yellow-400 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill-opacity="0.3"/></svg>');
+            }
+
+            const emptyStars = 5 - Math.ceil(rating);
+            for (let i = 0; i < emptyStars; i++) {
+                stars.push('<svg class="w-4 h-4 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill-opacity="0.3"/></svg>');
+            }
+
+            return stars.join('');
+        }
+
+        function getTotalPrice() {
+            return appState.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+
+        function getTotalItems() {
+            return appState.cart.reduce((total, item) => total + item.quantity, 0);
+        }
+
+        function filteredFruits() {
+            return fruits.filter(fruit => {
+                const matchesSearch = fruit.name.toLowerCase().includes(appState.searchTerm.toLowerCase()) ||
+                                    fruit.description.toLowerCase().includes(appState.searchTerm.toLowerCase());
+                const matchesCategory = appState.selectedCategory === "all" || fruit.category === appState.selectedCategory;
+                return matchesSearch && matchesCategory;
+            });
+        }
+
+        // Event handlers
+        function addToCart(fruit) {
+            const existing = appState.cart.find(item => item.id === fruit.id);
+            if (existing) {
+                existing.quantity += 1;
+            } else {
+                appState.cart.push({ ...fruit, quantity: 1 });
+            }
+            saveCart();
+            showToast('Added to cart!');
+            render();
+        }
+
+        function removeFromCart(fruitId) {
+            appState.cart = appState.cart.filter(item => item.id !== fruitId);
+            saveCart();
+            render();
+        }
+
+        function updateQuantity(fruitId, quantity) {
+            if (quantity === 0) {
+                removeFromCart(fruitId);
+                return;
+            }
+            const item = appState.cart.find(item => item.id === fruitId);
+            if (item) {
+                item.quantity = quantity;
+            }
+            saveCart();
+            render();
+        }
+
+        function toggleFavorite(fruitId) {
+            if (appState.favorites.includes(fruitId)) {
+                appState.favorites = appState.favorites.filter(id => id !== fruitId);
+            } else {
+                appState.favorites.push(fruitId);
+            }
+            saveFavorites();
+            render();
+        }
+
+        function proceedToCheckout() {
+            if (appState.cart.length === 0) {
+                showToast('Your cart is empty!');
+                return;
+            }
+            appState.isCartOpen = false;
+            appState.checkoutStep = 1;
+            render();
+        }
+
+        function nextCheckoutStep() {
+            if (appState.checkoutStep === 1) {
+                // Validate shipping info
+                const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
+                let isValid = true;
+                let errorMessage = '';
+                
+                for (const field of requiredFields) {
+                    if (!appState.shippingInfo[field] || appState.shippingInfo[field].trim() === '') {
+                        isValid = false;
+                        errorMessage = `Please fill in your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+                        break;
+                    }
+                }
+                
+                if (!isValid) {
+                    showToast(errorMessage);
+                    return;
+                }
+                
+                // Validate email format
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(appState.shippingInfo.email)) {
+                    showToast('Please enter a valid email address');
+                    return;
+                }
+            } else if (appState.checkoutStep === 2) {
+                // Validate payment info
+                const requiredFields = ['cardNumber', 'expiryDate', 'cvv', 'cardholderName'];
+                let isValid = true;
+                let errorMessage = '';
+                
+                for (const field of requiredFields) {
+                    if (!appState.paymentInfo[field] || appState.paymentInfo[field].trim() === '') {
+                        isValid = false;
+                        errorMessage = `Please fill in your ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`;
+                        break;
+                    }
+                }
+                
+                if (!isValid) {
+                    showToast(errorMessage);
+                    return;
+                }
+                
+                // Validate card number (basic validation)
+                const cardNumber = appState.paymentInfo.cardNumber.replace(/\s/g, '');
+                if (cardNumber.length < 13 || cardNumber.length > 19) {
+                    showToast('Please enter a valid card number');
+                    return;
+                }
+                
+                // Validate expiry date
+                const expiryDate = appState.paymentInfo.expiryDate;
+                if (!expiryDate.match(/^\d{2}\/\d{2}$/)) {
+                    showToast('Please enter expiry date in MM/YY format');
+                    return;
+                }
+                
+                // Validate CVV
+                if (appState.paymentInfo.cvv.length < 3 || appState.paymentInfo.cvv.length > 4) {
+                    showToast('Please enter a valid CVV');
+                    return;
+                }
+            }
+            
+            appState.checkoutStep++;
+            render();
+        }
+
+        function prevCheckoutStep() {
+            appState.checkoutStep--;
+            render();
+        }
+
+        function placeOrder() {
+            // Create order object
+            const order = {
+                id: Math.floor(Math.random() * 1000000) + 1000,
+                customer: `${appState.shippingInfo.firstName} ${appState.shippingInfo.lastName}`,
+                email: appState.shippingInfo.email,
+                phone: appState.shippingInfo.phone,
+                address: `${appState.shippingInfo.address}, ${appState.shippingInfo.city}, ${appState.shippingInfo.state} ${appState.shippingInfo.zipCode}, ${appState.shippingInfo.country}`,
+                total: getTotalPrice() + 5, // Add shipping cost
+                items: appState.cart.length,
+                status: 'pending',
+                date: new Date().toISOString().split('T')[0],
+                itemsList: appState.cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                }))
+            };
+            
+            // Save order to localStorage
+            const orders = JSON.parse(localStorage.getItem('freshfruit-orders')) || [];
+            orders.push(order);
+            localStorage.setItem('freshfruit-orders', JSON.stringify(orders));
+            
+            // Clear cart
+            appState.cart = [];
+            saveCart();
+            
+            // Reset checkout
+            appState.checkoutStep = 0;
+            
+            showToast('Order placed successfully! Your order is pending approval.');
+            render();
+        }
+
+        function goBackToDashboard() {
+            appState.checkoutStep = 0;
+            render();
+        }
+
+        // Render the entire app
+        function render() {
+            const app = document.getElementById('app');
+            
+            app.innerHTML = `
+                <!-- Header -->
+                <header class="bg-white shadow-lg sticky top-0 z-50">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex items-center justify-between h-16">
+                            <div class="flex items-center">
+                                <h1 class="text-2xl font-bold text-green-600">FreshFruit</h1>
+                            </div>
+                            
+                            <div class="hidden md:flex flex-1 max-w-lg mx-8">
+                                <div class="relative flex-1">
+                                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    <input
+                                        type="text"
+                                        placeholder="Search for fruits..."
+                                        value="${appState.searchTerm}"
+                                        oninput="appState.searchTerm = this.value; render()"
+                                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-4">
+                                <button
+                                    onclick="appState.isCartOpen = true; render()"
+                                    class="relative p-2 text-gray-600 hover:text-green-600 transition-colors"
+                                >
+                                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13v9m10-9h-9m8 0a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                                    ${getTotalItems() > 0 ? `<span class="absolute -top-1 -right-1 bg-green-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">${getTotalItems()}</span>` : ''}
+                                </button>
+                                
+                                <button
+                                    onclick="appState.isMenuOpen = !appState.isMenuOpen; render()"
+                                    class="md:hidden p-2 text-gray-600"
+                                >
+                                    ${appState.isMenuOpen ? '<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>' : '<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Search -->
+                        <div class="md:hidden pb-4">
+                            <div class="relative">
+                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input
+                                    type="text"
+                                    placeholder="Search for fruits..."
+                                    value="${appState.searchTerm}"
+                                    oninput="appState.searchTerm = this.value; render()"
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Mobile Menu -->
+                ${appState.isMenuOpen ? `
+                <div class="md:hidden bg-white border-b border-gray-200">
+                    <div class="px-4 py-2 space-y-2">
+                        ${categories.map(category => `
+                            <button
+                                onclick="appState.selectedCategory = '${category.id}'; appState.isMenuOpen = false; render()"
+                                class="w-full text-left px-3 py-2 rounded-lg transition-colors ${appState.selectedCategory === category.id ? 'bg-green-100 text-green-700' : 'text-gray-700 hover:bg-gray-100'}"
+                            >
+                                <span class="mr-2">${category.icon}</span>
+                                ${category.name}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Hero Section -->
+                <section class="relative h-96 md:h-[500px] overflow-hidden">
+                    <div 
+                        class="flex transition-transform duration-500 ease-in-out h-full"
+                        style="transform: translateX(-${appState.currentSlide * 100}%);"
+                    >
+                        ${heroSlides.map((slide, index) => `
+                            <div key="${index}" class="w-full flex-shrink-0 relative">
+                                <img
+                                    src="${slide.image}"
+                                    alt="${slide.title}"
+                                    class="w-full h-full object-cover"
+                                />
+                                <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                                    <div class="text-center text-white">
+                                        <h2 class="text-4xl md:text-6xl font-bold mb-4">${slide.title}</h2>
+                                        <p class="text-xl md:text-2xl mb-8">${slide.subtitle}</p>
+                                        <button class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-colors">
+                                            Shop Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <!-- Slide Indicators -->
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                        ${heroSlides.map((_, index) => `
+                            <button
+                                onclick="appState.currentSlide = ${index}; render()"
+                                class="w-3 h-3 rounded-full transition-colors ${index === appState.currentSlide ? 'bg-white' : 'bg-white bg-opacity-50'}"
+                            ></button>
+                        `).join('')}
+                    </div>
+                    
+                    <!-- Slide Controls -->
+                    <button
+                        onclick="appState.currentSlide = (appState.currentSlide - 1 + ${heroSlides.length}) % ${heroSlides.length}; render()"
+                        class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                    >
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button
+                        onclick="appState.currentSlide = (appState.currentSlide + 1) % ${heroSlides.length}; render()"
+                        class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                    >
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </section>
+
+                <!-- Categories -->
+                <section class="bg-white py-8">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Shop by Category</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            ${categories.map(category => `
+                                <button
+                                    onclick="appState.selectedCategory = '${category.id}'; render()"
+                                    class="p-6 rounded-xl border-2 transition-all hover:shadow-lg ${appState.selectedCategory === category.id ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 hover:border-gray-300 text-gray-700'}"
+                                >
+                                    <div class="text-4xl mb-2">${category.icon}</div>
+                                    <div class="font-semibold">${category.name}</div>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Products -->
+                <section class="py-12">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-4 md:mb-0">
+                                ${appState.selectedCategory === 'all' ? 'All Fruits' : categories.find(c => c.id === appState.selectedCategory)?.name}
+                            </h2>
+                            <div class="text-sm text-gray-600">
+                                ${filteredFruits().length} items found
+                            </div>
+                        </div>
+
+                        ${filteredFruits().length === 0 ? `
+                            <div class="text-center py-16">
+                                <div class="text-6xl mb-4">🍎</div>
+                                <h3 class="text-xl font-semibold text-gray-700 mb-2">No fruits found</h3>
+                                <p class="text-gray-500">Try adjusting your search or filter criteria.</p>
+                            </div>
+                        ` : `
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                ${filteredFruits().map(fruit => `
+                                    <div key="${fruit.id}" class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 hover:scale-105">
+                                        <div class="relative">
+                                            <img
+                                                src="${fruit.image}"
+                                                alt="${fruit.name}"
+                                                class="w-full h-48 object-cover"
+                                                onerror="this.parentElement.classList.add('product-image'); this.outerHTML='<div class=\\'text-6xl\\'>${fruit.name.charAt(0)}</div>'"
+                                            />
+                                            <button
+                                                onclick="toggleFavorite(${fruit.id})"
+                                                class="absolute top-3 right-3 p-2 rounded-full transition-colors ${appState.favorites.includes(fruit.id) ? 'bg-red-100 text-red-600' : 'bg-white bg-opacity-80 text-gray-400 hover:text-red-500'}"
+                                            >
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                            </button>
+                                            ${!fruit.inStock ? `
+                                                <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                                    <span class="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                                        Out of Stock
+                                                    </span>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                        
+                                        <div class="p-6">
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-2">${fruit.name}</h3>
+                                            <p class="text-gray-600 text-sm mb-3 line-clamp-2">${fruit.description}</p>
+                                            
+                                            <div class="flex items-center mb-3">
+                                                ${renderStars(fruit.rating)}
+                                                <span class="ml-2 text-sm text-gray-600">(${fruit.rating})</span>
+                                            </div>
+                                            
+                                            <div class="flex items-center justify-between mb-4">
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="text-2xl font-bold text-green-600">$${fruit.price}</span>
+                                                    ${fruit.originalPrice ? `<span class="text-sm text-gray-500 line-through">$${fruit.originalPrice}</span>` : ''}
+                                                </div>
+                                                ${fruit.originalPrice ? `
+                                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">
+                                                        Save $${(fruit.originalPrice - fruit.price).toFixed(2)}
+                                                    </span>
+                                                ` : ''}
+                                            </div>
+                                            
+                                            <button
+                                                onclick="${fruit.inStock ? `addToCart(${JSON.stringify(fruit).replace(/"/g, '&quot;')})` : ''}"
+                                                ${!fruit.inStock ? 'disabled' : ''}
+                                                class="w-full py-3 px-4 rounded-lg font-semibold transition-colors ${fruit.inStock ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}"
+                                            >
+                                                ${fruit.inStock ? 'Add to Cart' : 'Out of Stock'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </section>
+
+                <!-- Features -->
+                <section class="bg-white py-16">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span class="text-2xl">🚚</span>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2">Free Delivery</h3>
+                                <p class="text-gray-600">Free shipping on orders over $50</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span class="text-2xl">🌱</span>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2">Organic & Fresh</h3>
+                                <p class="text-gray-600">100% organic, farm-fresh produce</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span class="text-2xl">💯</span>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2">Quality Guaranteed</h3>
+                                <p class="text-gray-600">Satisfaction guaranteed or your money back</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Footer -->
+                <footer class="bg-gray-900 text-white py-12">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                            <div>
+                                <h3 class="text-2xl font-bold text-green-400 mb-4">FreshFruit</h3>
+                                <p class="text-gray-300 mb-4">
+                                    Delivering the freshest organic fruits straight from local farms to your doorstep.
+                                </p>
+                                <div class="flex space-x-4">
+                                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors cursor-pointer">
+                                        <span class="text-sm">f</span>
+                                    </div>
+                                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors cursor-pointer">
+                                        <span class="text-sm">t</span>
+                                    </div>
+                                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors cursor-pointer">
+                                        <span class="text-sm">in</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-lg font-semibold mb-4">Shop</h4>
+                                <ul class="space-y-2 text-gray-300">
+                                    <li><a href="#" class="hover:text-green-400 transition-colors">All Products</a></li>
+                                    <li><a href="#" class="hover:text-green-400 transition-colors">Organic Fruits</a></li>
+                                    <li><a href="#" class="hover:text-green-400 transition-colors">Seasonal Specials</a></li>
+                                    <li><a href="#" class="hover:text-green-400 transition-colors">Gift Boxes</a></li>
+                                </ul>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-lg font-semibold mb-4">Support</h4>
+                                <ul class="space-y-2 text-gray-300">
+                                    <li><a href="#" class="hover:text-green-400 transition-colors">Help Center</a></li>
+                                    <li><a href="#" class="hover:text-green-400 transition-colors">Contact Us</a></li>
+                                    <li><a href="#" class="hover:text-green-400 transition-colors">Shipping Info</a></li>
+                                    <li><a href="#" class="hover:text-green-400 transition-colors">Returns</a></li>
+                                </ul>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-lg font-semibold mb-4">Newsletter</h4>
+                                <p class="text-gray-300 mb-4">Subscribe for weekly deals and fresh fruit tips.</p>
+                                <div class="flex">
+                                    <input
+                                        type="email"
+                                        placeholder="Your email"
+                                        class="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:border-green-500"
+                                    />
+                                    <button class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-r-lg transition-colors">
+                                        Subscribe
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                            <p>&copy; 2024 FreshFruit. All rights reserved.</p>
+                        </div>
+                    </div>
+                </footer>
+
+                <!-- Cart Sidebar -->
+                ${appState.isCartOpen ? `
+                <div class="fixed inset-0 z-50 overflow-hidden">
+                    <div class="absolute inset-0 bg-black bg-opacity-50" onclick="appState.isCartOpen = false; render()"></div>
+                    <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
+                        <div class="flex flex-col h-full">
+                            <div class="flex items-center justify-between p-6 border-b">
+                                <h2 class="text-xl font-semibold">Your Cart (${getTotalItems()})</h2>
+                                <button
+                                    onclick="appState.isCartOpen = false; render()"
+                                    class="p-2 text-gray-400 hover:text-gray-600"
+                                >
+                                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                            
+                            <div class="flex-1 overflow-y-auto p-6">
+                                ${appState.cart.length === 0 ? `
+                                    <div class="text-center py-16">
+                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13v9m10-9h-9m8 0a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                                        <p class="text-gray-500">Your cart is empty</p>
+                                    </div>
+                                ` : `
+                                    <div class="space-y-4">
+                                        ${appState.cart.map(item => `
+                                            <div key="${item.id}" class="flex items-center space-x-4 bg-gray-50 p-4 rounded-lg">
+                                                <img
+                                                    src="${item.image}"
+                                                    alt="${item.name}"
+                                                    class="w-16 h-16 object-cover rounded"
+                                                    onerror="this.outerHTML='<div class=\\'w-16 h-16 bg-gray-200 rounded flex items-center justify-center\\'><div class=\\'text-2xl\\'>${item.name.charAt(0)}</div></div>'"
+                                                />
+                                                <div class="flex-1">
+                                                    <h3 class="font-semibold text-gray-900">${item.name}</h3>
+                                                    <p class="text-green-600 font-semibold">$${item.price}</p>
+                                                </div>
+                                                <div class="flex items-center space-x-2">
+                                                    <button
+                                                        onclick="updateQuantity(${item.id}, ${item.quantity - 1})"
+                                                        class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span class="w-8 text-center">${item.quantity}</span>
+                                                    <button
+                                                        onclick="updateQuantity(${item.id}, ${item.quantity + 1})"
+                                                        class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    onclick="removeFromCart(${item.id})"
+                                                    class="text-red-500 hover:text-red-700"
+                                                >
+                                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                                </button>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `}
+                            </div>
+                            
+                            ${appState.cart.length > 0 ? `
+                                <div class="border-t p-6">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <span class="text-lg font-semibold">Subtotal:</span>
+                                        <span class="text-2xl font-bold text-green-600">$${getTotalPrice().toFixed(2)}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-4">
+                                        <span class="text-sm">Shipping:</span>
+                                        <span class="text-sm font-medium">$5.00</span>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-6 font-bold">
+                                        <span class="text-lg">Total:</span>
+                                        <span class="text-2xl text-green-600">$${(getTotalPrice() + 5).toFixed(2)}</span>
+                                    </div>
+                                    <button onclick="proceedToCheckout()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                                        Proceed to Checkout
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Checkout Modal -->
+                ${appState.checkoutStep > 0 ? `
+                <div class="fixed inset-0 z-50 overflow-hidden">
+                    <div class="absolute inset-0 bg-black bg-opacity-50" onclick="goBackToDashboard()"></div>
+                    <div class="absolute inset-0 overflow-y-auto">
+                        <div class="flex min-h-full items-center justify-center p-4">
+                            <div class="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h2 class="text-2xl font-bold">Checkout</h2>
+                                    <button
+                                        onclick="goBackToDashboard()"
+                                        class="text-gray-400 hover:text-gray-600"
+                                    >
+                                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                                
+                                <!-- Progress Steps -->
+                                <div class="mb-8">
+                                    <div class="flex items-center">
+                                        <div class="flex items-center">
+                                            <div class="z-10 flex items-center justify-center w-8 h-8 rounded-full ${appState.checkoutStep >= 1 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}">
+                                                1
+                                            </div>
+                                            <div class="hidden sm:block w-20 h-1 mx-2 ${appState.checkoutStep >= 2 ? 'bg-green-600' : 'bg-gray-200'}"></div>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <div class="z-10 flex items-center justify-center w-8 h-8 rounded-full ${appState.checkoutStep >= 2 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}">
+                                                2
+                                            </div>
+                                            <div class="hidden sm:block w-20 h-1 mx-2 ${appState.checkoutStep >= 3 ? 'bg-green-600' : 'bg-gray-200'}"></div>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <div class="z-10 flex items-center justify-center w-8 h-8 rounded-full ${appState.checkoutStep >= 3 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}">
+                                                3
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between mt-2 text-sm">
+                                        <span>Shipping</span>
+                                        <span>Payment</span>
+                                        <span>Confirmation</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Shipping Information -->
+                                ${appState.checkoutStep === 1 ? `
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-4">Shipping Information</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                            <input
+                                                type="text"
+                                                value="${appState.shippingInfo.firstName}"
+                                                oninput="appState.shippingInfo.firstName = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                            <input
+                                                type="text"
+                                                value="${appState.shippingInfo.lastName}"
+                                                oninput="appState.shippingInfo.lastName = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                            <input
+                                                type="email"
+                                                value="${appState.shippingInfo.email}"
+                                                oninput="appState.shippingInfo.email = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                            <input
+                                                type="tel"
+                                                value="${appState.shippingInfo.phone}"
+                                                oninput="appState.shippingInfo.phone = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                            <input
+                                                type="text"
+                                                value="${appState.shippingInfo.address}"
+                                                oninput="appState.shippingInfo.address = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                placeholder="123 Main St"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                                            <input
+                                                type="text"
+                                                value="${appState.shippingInfo.city}"
+                                                oninput="appState.shippingInfo.city = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                                            <input
+                                                type="text"
+                                                value="${appState.shippingInfo.state}"
+                                                oninput="appState.shippingInfo.state = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
+                                            <input
+                                                type="text"
+                                                value="${appState.shippingInfo.zipCode}"
+                                                oninput="appState.shippingInfo.zipCode = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                            <select
+                                                value="${appState.shippingInfo.country}"
+                                                oninput="appState.shippingInfo.country = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            >
+                                                <option value="United States">United States</option>
+                                                <option value="Canada">Canada</option>
+                                                <option value="United Kingdom">United Kingdom</option>
+                                                <option value="Australia">Australia</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-8 flex justify-end">
+                                        <button
+                                            onclick="nextCheckoutStep()"
+                                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                                        >
+                                            Continue to Payment
+                                        </button>
+                                    </div>
+                                </div>
+                                ` : ''}
+                                
+                                <!-- Payment Information -->
+                                ${appState.checkoutStep === 2 ? `
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-4">Payment Information</h3>
+                                    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                                        <div class="flex items-center mb-4">
+                                            <span class="text-sm font-medium text-gray-700 mr-2">Subtotal:</span>
+                                            <span class="text-lg font-bold text-gray-900">$${getTotalPrice().toFixed(2)}</span>
+                                        </div>
+                                        <div class="flex items-center mb-4">
+                                            <span class="text-sm font-medium text-gray-700 mr-2">Shipping:</span>
+                                            <span class="text-lg font-bold text-gray-900">$5.00</span>
+                                        </div>
+                                        <div class="flex items-center font-bold text-lg">
+                                            <span class="text-sm font-medium text-gray-700 mr-2">Total:</span>
+                                            <span class="text-2xl text-gray-900">$${(getTotalPrice() + 5).toFixed(2)}</span>
+                                        </div>
+                                        <div class="text-sm text-gray-600 mt-2">
+                                            ${getTotalItems()} items
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
+                                            <input
+                                                type="text"
+                                                value="${appState.paymentInfo.cardNumber}"
+                                                oninput="appState.paymentInfo.cardNumber = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                placeholder="1234 5678 9012 3456"
+                                                maxlength="19"
+                                                oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/(.{4})/g, '$1 ').trim()"
+                                            />
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                                                <input
+                                                    type="text"
+                                                    value="${appState.paymentInfo.expiryDate}"
+                                                    oninput="appState.paymentInfo.expiryDate = this.value"
+                                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                    placeholder="MM/YY"
+                                                    maxlength="5"
+                                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/(.{2})/, '$1/').substr(0, 5)"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">CVV</label>
+                                                <input
+                                                    type="text"
+                                                    value="${appState.paymentInfo.cvv}"
+                                                    oninput="appState.paymentInfo.cvv = this.value"
+                                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                    placeholder="123"
+                                                    maxlength="4"
+                                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Cardholder Name</label>
+                                            <input
+                                                type="text"
+                                                value="${appState.paymentInfo.cardholderName}"
+                                                oninput="appState.paymentInfo.cardholderName = this.value"
+                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-8 flex justify-between">
+                                        <button
+                                            onclick="prevCheckoutStep()"
+                                            class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors"
+                                        >
+                                            Back to Shipping
+                                        </button>
+                                        <button
+                                            onclick="nextCheckoutStep()"
+                                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                                        >
+                                            Continue to Review
+                                        </button>
+                                    </div>
+                                </div>
+                                ` : ''}
+                                
+                                <!-- Order Confirmation -->
+                                ${appState.checkoutStep === 3 ? `
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-4">Order Confirmation</h3>
+                                    
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-green-800">Order will be placed</h3>
+                                                <div class="mt-2 text-sm text-green-700">
+                                                    <p>Your order will be processed and you will receive a confirmation email once it's approved.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="border rounded-lg p-4 mb-6">
+                                        <h4 class="font-medium text-gray-900 mb-3">Order Summary</h4>
+                                        <div class="space-y-2">
+                                            ${appState.cart.map(item => `
+                                                <div class="flex justify-between text-sm">
+                                                    <span>${item.name} × ${item.quantity}</span>
+                                                    <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                                                </div>
+                                            `).join('')}
+                                            <div class="border-t pt-2 mt-2">
+                                                <div class="flex justify-between">
+                                                    <span>Subtotal</span>
+                                                    <span>$${getTotalPrice().toFixed(2)}</span>
+                                                </div>
+                                                <div class="flex justify-between">
+                                                    <span>Shipping</span>
+                                                    <span>$5.00</span>
+                                                </div>
+                                                <div class="flex justify-between font-semibold text-lg">
+                                                    <span>Total</span>
+                                                    <span>$${(getTotalPrice() + 5).toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="border rounded-lg p-4 mb-6">
+                                        <h4 class="font-medium text-gray-900 mb-3">Shipping Information</h4>
+                                        <div class="text-sm">
+                                            <p>${appState.shippingInfo.firstName} ${appState.shippingInfo.lastName}</p>
+                                            <p>${appState.shippingInfo.address}</p>
+                                            <p>${appState.shippingInfo.city}, ${appState.shippingInfo.state} ${appState.shippingInfo.zipCode}</p>
+                                            <p>${appState.shippingInfo.country}</p>
+                                            <p>${appState.shippingInfo.phone}</p>
+                                            <p>${appState.shippingInfo.email}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-8 flex justify-between">
+                                        <button
+                                            onclick="prevCheckoutStep()"
+                                            class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors"
+                                        >
+                                            Back to Payment
+                                        </button>
+                                        <button
+                                            onclick="placeOrder()"
+                                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                                        >
+                                            Place Order
+                                        </button>
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            // Re-initialize Lucide icons after rendering
+            lucide.createIcons();
+        }
+
+        // Auto-advance hero slides
+        setInterval(() => {
+            appState.currentSlide = (appState.currentSlide + 1) % heroSlides.length;
+            render();
+        }, 5000);
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>

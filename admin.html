@@ -1,0 +1,2069 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshFruit Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .main-content {
+            transition: all 0.3s ease;
+        }
+        .sidebar-collapsed {
+            width: 80px;
+        }
+        .sidebar-expanded {
+            width: 280px;
+        }
+        .main-content-expanded {
+            margin-left: 280px;
+        }
+        .main-content-collapsed {
+            margin-left: 80px;
+        }
+        .file-upload {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 150px;
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .file-upload input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .file-upload:hover {
+            border-color: #10b981;
+        }
+        .product-image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            background-color: #10b981;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app"></div>
+    <div id="toast" class="toast">Action completed successfully!</div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Admin state
+        const adminState = {
+            sidebarCollapsed: false,
+            activeTab: 'dashboard',
+            products: JSON.parse(localStorage.getItem('freshfruit-products')) || [
+                {
+                    id: 1,
+                    name: "Organic Apples",
+                    price: 2.99,
+                    originalPrice: 3.99,
+                    category: "fruits",
+                    stock: 50,
+                    image: "https://images.unsplash.com/photo-1568886220439-7ae4684e18c8?w=500&h=500&fit=crop",
+                    rating: 4.8,
+                    inStock: true,
+                    createdAt: "2024-01-15",
+                    description: "Fresh organic apples from local farms. Perfect for snacking or baking."
+                },
+                {
+                    id: 2,
+                    name: "Premium Bananas",
+                    price: 1.49,
+                    originalPrice: 1.99,
+                    category: "fruits",
+                    stock: 30,
+                    image: "https://images.unsplash.com/photo-1587135753163-6167c1a1ad65?w=500&h=500&fit=crop",
+                    rating: 4.6,
+                    inStock: true,
+                    createdAt: "2024-01-14",
+                    description: "Ripe and sweet bananas, perfect for smoothies and desserts."
+                },
+                {
+                    id: 3,
+                    name: "Juicy Oranges",
+                    price: 3.29,
+                    originalPrice: 3.99,
+                    category: "fruits",
+                    stock: 40,
+                    image: "https://images.unsplash.com/photo-1598135753163-6167c1a1ad65?w=500&h=500&fit=crop",
+                    rating: 4.7,
+                    inStock: true,
+                    createdAt: "2024-01-13",
+                    description: "Sun-ripened oranges bursting with vitamin C and natural sweetness."
+                },
+                {
+                    id: 4,
+                    name: "Strawberry Basket",
+                    price: 5.99,
+                    originalPrice: 7.99,
+                    category: "berries",
+                    stock: 25,
+                    image: "https://images.unsplash.com/photo-1562709634-9a098720ace3?w=500&h=500&fit=crop",
+                    rating: 4.9,
+                    inStock: true,
+                    createdAt: "2024-01-12",
+                    description: "Plump, sweet strawberries perfect for desserts and snacking."
+                },
+                {
+                    id: 5,
+                    name: "Blueberry Pack",
+                    price: 4.99,
+                    originalPrice: 5.99,
+                    category: "berries",
+                    stock: 0,
+                    image: "https://images.unsplash.com/photo-1594172337802-4d0271233828?w=500&h=500&fit=crop",
+                    rating: 4.5,
+                    inStock: false,
+                    createdAt: "2024-01-11",
+                    description: "Antioxidant-rich blueberries, great for smoothies and breakfast bowls."
+                }
+            ],
+            orders: JSON.parse(localStorage.getItem('freshfruit-orders')) || [
+                {
+                    id: 1001,
+                    customer: "John Doe",
+                    email: "john@example.com",
+                    phone: "(555) 123-4567",
+                    total: 24.99,
+                    status: "completed",
+                    date: "2024-01-15",
+                    items: 3,
+                    address: "123 Main St, City, State 12345"
+                },
+                {
+                    id: 1002,
+                    customer: "Jane Smith",
+                    email: "jane@example.com",
+                    phone: "(555) 987-6543",
+                    total: 15.49,
+                    status: "processing",
+                    date: "2024-01-15",
+                    items: 2,
+                    address: "456 Oak Ave, Town, State 67890"
+                },
+                {
+                    id: 1003,
+                    customer: "Mike Johnson",
+                    email: "mike@example.com",
+                    phone: "(555) 456-7890",
+                    total: 32.99,
+                    status: "shipped",
+                    date: "2024-01-14",
+                    items: 4,
+                    address: "789 Pine Rd, Village, State 54321"
+                },
+                {
+                    id: 1004,
+                    customer: "Sarah Wilson",
+                    email: "sarah@example.com",
+                    phone: "(555) 321-6547",
+                    total: 18.99,
+                    status: "pending",
+                    date: "2024-01-14",
+                    items: 2,
+                    address: "321 Elm St, Hamlet, State 98765"
+                },
+                {
+                    id: 1005,
+                    customer: "David Brown",
+                    email: "david@example.com",
+                    phone: "(555) 654-3210",
+                    total: 45.99,
+                    status: "completed",
+                    date: "2024-01-13",
+                    items: 5,
+                    address: "654 Cedar Ln, Borough, State 87654"
+                }
+            ],
+            categories: JSON.parse(localStorage.getItem('freshfruit-categories')) || [
+                { id: 1, name: "Fruits", count: 12, color: "bg-green-100 text-green-800" },
+                { id: 2, name: "Berries", count: 8, color: "bg-red-100 text-red-800" },
+                { id: 3, name: "Tropical", count: 6, color: "bg-orange-100 text-orange-800" },
+                { id: 4, name: "Grapes", count: 4, color: "bg-purple-100 text-purple-800" },
+                { id: 5, name: "Melons", count: 3, color: "bg-pink-100 text-pink-800" }
+            ],
+            users: JSON.parse(localStorage.getItem('freshfruit-users')) || [
+                { id: 1, name: "John Doe", email: "john@example.com", role: "customer", status: "active", createdAt: "2024-01-10" },
+                { id: 2, name: "Jane Smith", email: "jane@example.com", role: "customer", status: "active", createdAt: "2024-01-11" },
+                { id: 3, name: "Admin User", email: "admin@example.com", role: "admin", status: "active", createdAt: "2024-01-01" }
+            ],
+            settings: JSON.parse(localStorage.getItem('freshfruit-settings')) || {
+                siteName: "FreshFruit",
+                contactEmail: "info@freshfruit.com",
+                phone: "+1 (555) 123-4567",
+                address: "123 Farm Road, Fruitville, CA 90210",
+                currency: "USD",
+                taxRate: 8.5,
+                shippingCost: 5.00,
+                enableNewsletter: true,
+                socialFacebook: "https://facebook.com/freshfruit",
+                socialTwitter: "https://twitter.com/freshfruit",
+                socialInstagram: "https://instagram.com/freshfruit"
+            },
+            newProduct: {
+                name: '',
+                price: '',
+                originalPrice: '',
+                category: '',
+                stock: '',
+                description: '',
+                image: ''
+            },
+            editingProduct: null,
+            editingOrder: null,
+            editingUser: null,
+            editingCategory: null
+        };
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('freshfruit-products', JSON.stringify(adminState.products));
+            localStorage.setItem('freshfruit-orders', JSON.stringify(adminState.orders));
+            localStorage.setItem('freshfruit-categories', JSON.stringify(adminState.categories));
+            localStorage.setItem('freshfruit-users', JSON.stringify(adminState.users));
+            localStorage.setItem('freshfruit-settings', JSON.stringify(adminState.settings));
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Render functions
+        function renderSidebar() {
+            return `
+                <div class="fixed left-0 top-0 h-full bg-white shadow-lg z-50 ${adminState.sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}">
+                    <div class="p-4 border-b">
+                        <div class="flex items-center">
+                            ${adminState.sidebarCollapsed ? 
+                                '<div class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold">F</div>' : 
+                                '<h1 class="text-xl font-bold text-green-600">FreshFruit Admin</h1>'
+                            }
+                        </div>
+                    </div>
+                    
+                    <nav class="mt-6">
+                        ${['dashboard', 'products', 'orders', 'users', 'categories', 'analytics', 'settings'].map(tab => `
+                            <a href="#" 
+                               onclick="adminState.activeTab = '${tab}'; render()"
+                               class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100 ${adminState.activeTab === tab ? 'bg-green-50 border-r-4 border-green-600' : ''}">
+                                <div class="w-6 h-6 mr-3">
+                                    ${getIcon(tab)}
+                                </div>
+                                ${adminState.sidebarCollapsed ? '' : `<span class="font-medium">${tab.charAt(0).toUpperCase() + tab.slice(1)}</span>`}
+                            </a>
+                        `).join('')}
+                    </nav>
+                    
+                    <div class="absolute bottom-0 w-full p-4 border-t">
+                        <a href="../index.html" class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100">
+                            <div class="w-6 h-6 mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                            </div>
+                            ${adminState.sidebarCollapsed ? '' : '<span class="font-medium">Back to Store</span>'}
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getIcon(tab) {
+            const icons = {
+                dashboard: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>',
+                products: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
+                orders: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>',
+                users: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+                categories: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>',
+                analytics: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>',
+                settings: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 1.41 1.41 1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1.31-1.31 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1-1.41-1.41 1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1.31 1.31 1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 1.41 1.65 1.65 0 0 0-1.82.33 1.65 1.65 0 0 0-1.31 1.31z"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="M12 2v2"></path><path d="M12 20v2"></path></svg>'
+            };
+            return icons[tab] || icons.dashboard;
+        }
+
+        function renderHeader() {
+            return `
+                <header class="bg-white shadow-sm ${adminState.sidebarCollapsed ? 'main-content-collapsed' : 'main-content-expanded'}">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex items-center justify-between h-16">
+                            <div class="flex items-center">
+                                <button 
+                                    onclick="adminState.sidebarCollapsed = !adminState.sidebarCollapsed; render()"
+                                    class="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                                </button>
+                                <h2 class="ml-4 text-xl font-semibold text-gray-900 capitalize">${adminState.activeTab}</h2>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Search..."
+                                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        style="width: 200px;"
+                                    />
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop" alt="Admin" class="w-8 h-8 rounded-full">
+                                    <span class="text-sm font-medium text-gray-700">Admin</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            `;
+        }
+
+        function getStats() {
+            const totalSales = adminState.orders.reduce((sum, order) => sum + order.total, 0);
+            const totalOrders = adminState.orders.length;
+            const totalProducts = adminState.products.length;
+            const lowStock = adminState.products.filter(p => p.stock <= 10).length;
+            const completedOrders = adminState.orders.filter(o => o.status === 'completed').length;
+            const processingOrders = adminState.orders.filter(o => o.status === 'processing').length;
+            const shippedOrders = adminState.orders.filter(o => o.status === 'shipped').length;
+            const pendingOrders = adminState.orders.filter(o => o.status === 'pending').length;
+            const activeUsers = adminState.users.filter(u => u.status === 'active').length;
+
+            return {
+                totalSales,
+                totalOrders,
+                totalProducts,
+                lowStock,
+                completedOrders,
+                processingOrders,
+                shippedOrders,
+                pendingOrders,
+                activeUsers
+            };
+        }
+
+        function renderDashboard() {
+            const stats = getStats();
+            
+            return `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-green-600">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Total Sales</p>
+                                <p class="text-2xl font-semibold text-gray-900">$${stats.totalSales.toLocaleString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-blue-600">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Total Orders</p>
+                                <p class="text-2xl font-semibold text-gray-900">${stats.totalOrders}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-purple-600">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Total Products</p>
+                                <p class="text-2xl font-semibold text-gray-900">${stats.totalProducts}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-red-600">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Low Stock Items</p>
+                                <p class="text-2xl font-semibold text-gray-900">${stats.lowStock}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">Recent Orders</h3>
+                            <button onclick="adminState.activeTab = 'orders'; render()" class="text-sm text-green-600 hover:text-green-800 font-medium">View all</button>
+                        </div>
+                        <div class="space-y-4">
+                            ${adminState.orders.slice(0, 5).map(order => `
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p class="font-medium text-gray-900">#${order.id} - ${order.customer}</p>
+                                        <p class="text-sm text-gray-500">${order.date}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-semibold text-gray-900">$${order.total}</p>
+                                        <span class="inline-block px-2 py-1 text-xs rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-800' : order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : order.status === 'shipped' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                                            ${order.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">Product Categories</h3>
+                            <button onclick="adminState.activeTab = 'categories'; render()" class="text-sm text-green-600 hover:text-green-800 font-medium">Manage</button>
+                        </div>
+                        <div class="space-y-3">
+                            ${adminState.categories.map(category => `
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 rounded-full ${category.color.split(' ')[0].replace('bg-', 'bg-')} mr-3"></div>
+                                        <span class="font-medium text-gray-900">${category.name}</span>
+                                    </div>
+                                    <span class="text-sm text-gray-500">${adminState.products.filter(p => p.category === category.name.toLowerCase()).length} products</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 bg-white p-6 rounded-xl shadow-sm border">
+                    <h3 class="text-lg font-semibold mb-4">Order Status Overview</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center p-4 bg-green-50 rounded-lg">
+                            <div class="text-2xl font-bold text-green-600">${stats.completedOrders}</div>
+                            <div class="text-sm text-green-800">Completed</div>
+                        </div>
+                        <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                            <div class="text-2xl font-bold text-yellow-600">${stats.processingOrders}</div>
+                            <div class="text-sm text-yellow-800">Processing</div>
+                        </div>
+                        <div class="text-center p-4 bg-blue-50 rounded-lg">
+                            <div class="text-2xl font-bold text-blue-600">${stats.shippedOrders}</div>
+                            <div class="text-sm text-blue-800">Shipped</div>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <div class="text-2xl font-bold text-gray-600">${stats.pendingOrders}</div>
+                            <div class="text-sm text-gray-800">Pending</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProducts() {
+            return `
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Products Management</h3>
+                        <p class="text-sm text-gray-500">Manage your fruit products inventory</p>
+                    </div>
+                    <button onclick="showAddProductForm()" class="mt-4 sm:mt-0 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 inline mr-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add Product
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search products..."
+                                    oninput="filterProducts(this.value)"
+                                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    style="width: 250px;"
+                                />
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </div>
+                            <div class="flex space-x-2">
+                                <select onchange="filterByCategory(this.value)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="">All Categories</option>
+                                    ${adminState.categories.map(cat => `<option value="${cat.name.toLowerCase()}">${cat.name}</option>`).join('')}
+                                </select>
+                                <select onchange="filterByStatus(this.value)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="">All Status</option>
+                                    <option value="in-stock">In Stock</option>
+                                    <option value="out-of-stock">Out of Stock</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="productsTableBody">
+                                ${adminState.products.map(product => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="h-10 w-10 flex-shrink-0">
+                                                    <img class="h-10 w-10 rounded-lg object-cover" src="${product.image}" alt="${product.name}">
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">${product.name}</div>
+                                                    <div class="text-sm text-gray-500">$${product.originalPrice} <span class="line-through text-gray-400"></span></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 font-medium">$${product.price}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 capitalize">${product.category}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">${product.stock}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                                ${product.inStock ? 'In Stock' : 'Out of Stock'}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button onclick="editProduct(${product.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                            <button onclick="deleteProduct(${product.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Add/Edit Product Form -->
+                <div id="productForm" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl mx-4">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold">${adminState.editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
+                            <button onclick="hideProductForm()" class="text-gray-400 hover:text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        
+                        <form onsubmit="saveProduct(event)" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                                    <input 
+                                        type="text" 
+                                        id="productName"
+                                        value="${adminState.editingProduct ? adminState.editingProduct.name : ''}"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="Enter product name"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                    <select 
+                                        id="productCategory"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    >
+                                        <option value="">Select category</option>
+                                        ${adminState.categories.map(category => `
+                                            <option value="${category.name.toLowerCase()}" ${adminState.editingProduct && adminState.editingProduct.category === category.name.toLowerCase() ? 'selected' : ''}>${category.name}</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                                    <input 
+                                        type="number" 
+                                        id="productPrice"
+                                        step="0.01"
+                                        value="${adminState.editingProduct ? adminState.editingProduct.price : ''}"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="0.00"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Original Price ($)</label>
+                                    <input 
+                                        type="number" 
+                                        id="productOriginalPrice"
+                                        step="0.01"
+                                        value="${adminState.editingProduct ? adminState.editingProduct.originalPrice : ''}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="0.00"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
+                                    <input 
+                                        type="number" 
+                                        id="productStock"
+                                        value="${adminState.editingProduct ? adminState.editingProduct.stock : ''}"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="0"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                                    <div class="file-upload" onclick="document.getElementById('productImageInput').click()">
+                                        <input type="file" id="productImageInput" accept="image/*" onchange="previewImage(event)">
+                                        <div id="imagePreviewContainer" class="flex flex-col items-center">
+                                            ${adminState.editingProduct && adminState.editingProduct.image ? `
+                                                <img src="${adminState.editingProduct.image}" class="product-image-preview" alt="Product preview">
+                                            ` : `
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-gray-400 mb-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                                <p class="text-sm text-gray-500">Click to upload image</p>
+                                            `}
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="productImage" value="${adminState.editingProduct ? adminState.editingProduct.image : ''}">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea 
+                                    id="productDescription"
+                                    rows="3"
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    placeholder="Enter product description"
+                                >${adminState.editingProduct ? adminState.editingProduct.description : ''}</textarea>
+                            </div>
+                            
+                            <div class="flex space-x-3 pt-4">
+                                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                                    ${adminState.editingProduct ? 'Update' : 'Add'} Product
+                                </button>
+                                <button type="button" onclick="hideProductForm()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOrders() {
+            return `
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Orders Management</h3>
+                        <p class="text-sm text-gray-500">Manage customer orders and shipments</p>
+                    </div>
+                    <div class="mt-4 sm:mt-0 flex space-x-2">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            Export Orders
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search orders..."
+                                    oninput="filterOrders(this.value)"
+                                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    style="width: 250px;"
+                                />
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </div>
+                            <div class="flex space-x-2">
+                                <select onchange="filterOrdersByStatus(this.value)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option>Last 30 days</option>
+                                    <option>Last 7 days</option>
+                                    <option>This month</option>
+                                    <option>Last month</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="ordersTableBody">
+                                ${adminState.orders.map(order => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">#${order.id}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">${order.customer}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">${order.date}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">${order.items} items</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">$${order.total}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                order.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                                order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : 
+                                                order.status === 'shipped' ? 'bg-blue-100 text-blue-800' : 
+                                                order.status === 'pending' ? 'bg-gray-100 text-gray-800' :
+                                                'bg-red-100 text-red-800'
+                                            }">
+                                                ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button onclick="viewOrder(${order.id})" class="text-blue-600 hover:text-blue-900 mr-3">View</button>
+                                            <button onclick="updateOrderStatus(${order.id})" class="text-green-600 hover:text-green-900 mr-3">Update</button>
+                                            <button onclick="deleteOrder(${order.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Order Details Modal -->
+                <div id="orderModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl mx-4">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold">Order Details - #<span id="orderNumber">1001</span></h3>
+                            <button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <h4 class="font-medium text-gray-900 mb-3">Customer Information</h4>
+                                <div class="space-y-2 text-sm">
+                                    <p><span class="font-medium">Name:</span> <span id="customerName">John Doe</span></p>
+                                    <p><span class="font-medium">Email:</span> <span id="customerEmail">john@example.com</span></p>
+                                    <p><span class="font-medium">Phone:</span> <span id="customerPhone">(555) 123-4567</span></p>
+                                    <p><span class="font-medium">Address:</span> <span id="customerAddress">123 Main St, City, State 12345</span></p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900 mb-3">Order Information</h4>
+                                <div class="space-y-2 text-sm">
+                                    <p><span class="font-medium">Date:</span> <span id="orderDate">Jan 15, 2024</span></p>
+                                    <p><span class="font-medium">Status:</span> <span id="orderStatus" class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Completed</span></p>
+                                    <p><span class="font-medium">Total:</span> $<span id="orderTotal">24.99</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h4 class="font-medium text-gray-900 mb-3">Order Items</h4>
+                            <div class="border rounded-lg overflow-hidden">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200" id="orderItems">
+                                        <!-- Items will be populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pt-4 border-t">
+                            <div>
+                                <p class="text-sm text-gray-500">Subtotal: $<span id="orderSubtotal">13.46</span></p>
+                                <p class="text-sm text-gray-500">Shipping: $<span id="orderShipping">5.00</span></p>
+                                <p class="text-sm text-gray-500">Tax: $<span id="orderTax">1.53</span></p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-lg font-semibold">Total: $<span id="modalTotal">24.99</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-3 pt-6">
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                Print Invoice
+                            </button>
+                            <select id="statusUpdateSelect" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="">Change Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button onclick="updateOrderStatusFromModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                Update
+                            </button>
+                            <button onclick="closeOrderModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderUsers() {
+            return `
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Users Management</h3>
+                        <p class="text-sm text-gray-500">Manage customer and admin accounts</p>
+                    </div>
+                    <button onclick="showAddUserForm()" class="mt-4 sm:mt-0 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 inline mr-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add User
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div class="px-6 py-4 border-b">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search users..."
+                                    oninput="filterUsers(this.value)"
+                                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    style="width: 250px;"
+                                />
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </div>
+                            <div class="flex space-x-2">
+                                <select onchange="filterUsersByRole(this.value)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="customer">Customer</option>
+                                </select>
+                                <select onchange="filterUsersByStatus(this.value)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="usersTableBody">
+                                ${adminState.users.map(user => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="h-10 w-10 flex-shrink-0">
+                                                    <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop" alt="${user.name}">
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">${user.name}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">${user.email}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
+                                                ${user.role}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                                ${user.status}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">${user.createdAt}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                            <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Add/Edit User Form -->
+                <div id="userForm" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold">${adminState.editingUser ? 'Edit User' : 'Add New User'}</h3>
+                            <button onclick="hideUserForm()" class="text-gray-400 hover:text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        
+                        <form onsubmit="saveUser(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <input 
+                                    type="text" 
+                                    id="userName"
+                                    value="${adminState.editingUser ? adminState.editingUser.name : ''}"
+                                    required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    placeholder="Enter full name"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input 
+                                    type="email" 
+                                    id="userEmail"
+                                    value="${adminState.editingUser ? adminState.editingUser.email : ''}"
+                                    required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    placeholder="Enter email address"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <select 
+                                    id="userRole"
+                                    required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                >
+                                    <option value="customer" ${adminState.editingUser && adminState.editingUser.role === 'customer' ? 'selected' : ''}>Customer</option>
+                                    <option value="admin" ${adminState.editingUser && adminState.editingUser.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select 
+                                    id="userStatus"
+                                    required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                >
+                                    <option value="active" ${adminState.editingUser && adminState.editingUser.status === 'active' ? 'selected' : ''}>Active</option>
+                                    <option value="inactive" ${adminState.editingUser && adminState.editingUser.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                                </select>
+                            </div>
+                            
+                            ${!adminState.editingUser ? `
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                    <input 
+                                        type="password" 
+                                        id="userPassword"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="Enter password"
+                                    >
+                                </div>
+                            ` : ''}
+                            
+                            <div class="flex space-x-3 pt-4">
+                                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                                    ${adminState.editingUser ? 'Update' : 'Add'} User
+                                </button>
+                                <button type="button" onclick="hideUserForm()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCategories() {
+            return `
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Categories Management</h3>
+                        <p class="text-sm text-gray-500">Manage product categories and inventory</p>
+                    </div>
+                    <button onclick="showAddCategoryForm()" class="mt-4 sm:mt-0 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 inline mr-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add Category
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${adminState.categories.map(category => `
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-semibold text-gray-900">${category.name}</h4>
+                                <div class="flex space-x-2">
+                                    <button onclick="editCategory(${category.id})" class="text-blue-600 hover:text-blue-900">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <button onclick="deleteCategory(${category.id})" class="text-red-600 hover:text-red-900">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 rounded-full ${category.color.split(' ')[0]} mr-3"></div>
+                                <span class="text-sm text-gray-600">${adminState.products.filter(p => p.category === category.name.toLowerCase()).length} products</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <!-- Add/Edit Category Form -->
+                <div id="categoryForm" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                    <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold">${adminState.editingCategory ? 'Edit Category' : 'Add New Category'}</h3>
+                            <button onclick="hideCategoryForm()" class="text-gray-400 hover:text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        
+                        <form onsubmit="saveCategory(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                                <input 
+                                    type="text" 
+                                    id="categoryName"
+                                    value="${adminState.editingCategory ? adminState.editingCategory.name : ''}"
+                                    required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    placeholder="Enter category name"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                                <select 
+                                    id="categoryColor"
+                                    required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                >
+                                    <option value="bg-green-100 text-green-800" ${adminState.editingCategory && adminState.editingCategory.color === 'bg-green-100 text-green-800' ? 'selected' : ''}>Green</option>
+                                    <option value="bg-red-100 text-red-800" ${adminState.editingCategory && adminState.editingCategory.color === 'bg-red-100 text-red-800' ? 'selected' : ''}>Red</option>
+                                    <option value="bg-blue-100 text-blue-800" ${adminState.editingCategory && adminState.editingCategory.color === 'bg-blue-100 text-blue-800' ? 'selected' : ''}>Blue</option>
+                                    <option value="bg-yellow-100 text-yellow-800" ${adminState.editingCategory && adminState.editingCategory.color === 'bg-yellow-100 text-yellow-800' ? 'selected' : ''}>Yellow</option>
+                                    <option value="bg-purple-100 text-purple-800" ${adminState.editingCategory && adminState.editingCategory.color === 'bg-purple-100 text-purple-800' ? 'selected' : ''}>Purple</option>
+                                    <option value="bg-pink-100 text-pink-800" ${adminState.editingCategory && adminState.editingCategory.color === 'bg-pink-100 text-pink-800' ? 'selected' : ''}>Pink</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex space-x-3 pt-4">
+                                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                                    ${adminState.editingCategory ? 'Update' : 'Add'} Category
+                                </button>
+                                <button type="button" onclick="hideCategoryForm()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAnalytics() {
+            const stats = getStats();
+            const totalRevenue = stats.totalSales;
+            const avgOrderValue = totalRevenue / stats.totalOrders || 0;
+            
+            return `
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Sales Analytics</h3>
+                    <div class="flex space-x-2">
+                        <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option>Last 7 days</option>
+                            <option>Last 30 days</option>
+                            <option>Last 90 days</option>
+                            <option>This year</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border">
+                        <h4 class="font-semibold text-gray-900 mb-4">Sales Overview</h4>
+                        <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+                            <div class="text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-gray-400 mx-auto mb-2">
+                                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                                </svg>
+                                <p class="text-gray-500">Sales chart will be displayed here</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <h4 class="font-semibold text-gray-900 mb-4">Key Metrics</h4>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Total Revenue</span>
+                                <span class="text-sm font-medium text-gray-900">$${totalRevenue.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Total Orders</span>
+                                <span class="text-sm font-medium text-gray-900">${stats.totalOrders}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Average Order Value</span>
+                                <span class="text-sm font-medium text-gray-900">$${avgOrderValue.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Conversion Rate</span>
+                                <span class="text-sm font-medium text-gray-900">3.2%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-sm text-gray-600">Customer Retention</span>
+                                <span class="text-sm font-medium text-gray-900">68%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <h4 class="font-semibold text-gray-900 mb-4">Top Selling Products</h4>
+                        <div class="space-y-4">
+                            ${adminState.products.slice().sort((a, b) => b.stock - a.stock).slice(0, 5).map((product, index) => `
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-sm font-medium text-gray-600 mr-3">
+                                        ${index + 1}
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">${product.name}</p>
+                                        <p class="text-xs text-gray-500">${product.stock} sold</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-gray-900">$${(product.price * product.stock).toFixed(2)}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <h4 class="font-semibold text-gray-900 mb-4">Sales by Category</h4>
+                        <div class="space-y-4">
+                            ${adminState.categories.map(category => {
+                                const productsInCategory = adminState.products.filter(p => p.category === category.name.toLowerCase());
+                                const salesInCategory = productsInCategory.reduce((sum, p) => sum + (p.price * p.stock), 0);
+                                const percentage = (salesInCategory / totalRevenue) * 100 || 0;
+                                return `
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full ${category.color.split(' ')[0]} mr-3"></div>
+                                            <span class="text-sm text-gray-900">${category.name}</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900">${percentage.toFixed(1)}%</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <h4 class="font-semibold text-gray-900 mb-4">Recent Customer Activity</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-4 py-3 text-sm">John Doe</td>
+                                    <td class="px-4 py-3 text-sm">Placed order #1005</td>
+                                    <td class="px-4 py-3 text-sm text-gray-500">2 minutes ago</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-sm">Jane Smith</td>
+                                    <td class="px-4 py-3 text-sm">Added Organic Apples to cart</td>
+                                    <td class="px-4 py-3 text-sm text-gray-500">15 minutes ago</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-sm">Mike Johnson</td>
+                                    <td class="px-4 py-3 text-sm">Created account</td>
+                                    <td class="px-4 py-3 text-sm text-gray-500">1 hour ago</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 text-sm">Sarah Wilson</td>
+                                    <td class="px-4 py-3 text-sm">Reviewed Juicy Oranges</td>
+                                    <td class="px-4 py-3 text-sm text-gray-500">3 hours ago</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSettings() {
+            return `
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Store Settings</h3>
+                        <p class="text-sm text-gray-500">Configure your store settings and preferences</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm border">
+                    <div class="p-6 border-b">
+                        <h4 class="font-semibold text-gray-900 mb-4">General Settings</h4>
+                        <form onsubmit="saveSettings(event)" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                                    <input 
+                                        type="text" 
+                                        id="siteName"
+                                        value="${adminState.settings.siteName}"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="Enter store name"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+                                    <input 
+                                        type="email" 
+                                        id="contactEmail"
+                                        value="${adminState.settings.contactEmail}"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="Enter contact email"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                    <input 
+                                        type="text" 
+                                        id="phone"
+                                        value="${adminState.settings.phone}"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="Enter phone number"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                    <input 
+                                        type="text" 
+                                        id="address"
+                                        value="${adminState.settings.address}"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="Enter store address"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                                    <select 
+                                        id="currency"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    >
+                                        <option value="USD" ${adminState.settings.currency === 'USD' ? 'selected' : ''}>USD - US Dollar</option>
+                                        <option value="EUR" ${adminState.settings.currency === 'EUR' ? 'selected' : ''}>EUR - Euro</option>
+                                        <option value="GBP" ${adminState.settings.currency === 'GBP' ? 'selected' : ''}>GBP - British Pound</option>
+                                        <option value="CAD" ${adminState.settings.currency === 'CAD' ? 'selected' : ''}>CAD - Canadian Dollar</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                                    <input 
+                                        type="number" 
+                                        id="taxRate"
+                                        step="0.01"
+                                        value="${adminState.settings.taxRate}"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="0.00"
+                                    >
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Shipping Cost ($)</label>
+                                    <input 
+                                        type="number" 
+                                        id="shippingCost"
+                                        step="0.01"
+                                        value="${adminState.settings.shippingCost}"
+                                        required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        placeholder="0.00"
+                                    >
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <input 
+                                        type="checkbox" 
+                                        id="enableNewsletter"
+                                        ${adminState.settings.enableNewsletter ? 'checked' : ''}
+                                        class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                                    >
+                                    <label for="enableNewsletter" class="ml-2 block text-sm text-gray-700">
+                                        Enable Newsletter Subscription
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t pt-6">
+                                <h4 class="font-semibold text-gray-900 mb-4">Social Media</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                                        <input 
+                                            type="url" 
+                                            id="socialFacebook"
+                                            value="${adminState.settings.socialFacebook}"
+                                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            placeholder="https://facebook.com/yourpage"
+                                        >
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Twitter</label>
+                                        <input 
+                                            type="url" 
+                                            id="socialTwitter"
+                                            value="${adminState.settings.socialTwitter}"
+                                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            placeholder="https://twitter.com/yourhandle"
+                                        >
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                                        <input 
+                                            type="url" 
+                                            id="socialInstagram"
+                                            value="${adminState.settings.socialInstagram}"
+                                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                            placeholder="https://instagram.com/yourhandle"
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-3 pt-4">
+                                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                    Save Settings
+                                </button>
+                                <button type="button" onclick="resetSettings()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors">
+                                    Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event handlers
+        function showAddProductForm() {
+            adminState.editingProduct = null;
+            document.getElementById('productForm').classList.remove('hidden');
+            // Reset form fields
+            document.getElementById('productName').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productOriginalPrice').value = '';
+            document.getElementById('productCategory').value = '';
+            document.getElementById('productStock').value = '';
+            document.getElementById('productDescription').value = '';
+            document.getElementById('productImage').value = '';
+            document.getElementById('imagePreviewContainer').innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-gray-400 mb-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <p class="text-sm text-gray-500">Click to upload image</p>
+            `;
+        }
+
+        function hideProductForm() {
+            document.getElementById('productForm').classList.add('hidden');
+        }
+
+        function editProduct(productId) {
+            adminState.editingProduct = adminState.products.find(p => p.id === productId);
+            document.getElementById('productForm').classList.remove('hidden');
+            
+            // Populate form fields
+            document.getElementById('productName').value = adminState.editingProduct.name;
+            document.getElementById('productPrice').value = adminState.editingProduct.price;
+            document.getElementById('productOriginalPrice').value = adminState.editingProduct.originalPrice;
+            document.getElementById('productCategory').value = adminState.editingProduct.category;
+            document.getElementById('productStock').value = adminState.editingProduct.stock;
+            document.getElementById('productDescription').value = adminState.editingProduct.description;
+            document.getElementById('productImage').value = adminState.editingProduct.image;
+            
+            // Update image preview
+            if (adminState.editingProduct.image) {
+                document.getElementById('imagePreviewContainer').innerHTML = `
+                    <img src="${adminState.editingProduct.image}" class="product-image-preview" alt="Product preview">
+                `;
+            }
+        }
+
+        function deleteProduct(productId) {
+            if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+                adminState.products = adminState.products.filter(p => p.id !== productId);
+                saveData();
+                showToast('Product deleted successfully!');
+                render();
+            }
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imagePreviewContainer').innerHTML = `
+                        <img src="${e.target.result}" class="product-image-preview" alt="Product preview">
+                    `;
+                    document.getElementById('productImage').value = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveProduct(event) {
+            event.preventDefault();
+            const name = document.getElementById('productName').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const originalPrice = document.getElementById('productOriginalPrice').value ? parseFloat(document.getElementById('productOriginalPrice').value) : price;
+            const category = document.getElementById('productCategory').value;
+            const stock = parseInt(document.getElementById('productStock').value);
+            const description = document.getElementById('productDescription').value;
+            const image = document.getElementById('productImage').value;
+            
+            if (adminState.editingProduct) {
+                // Update existing product
+                adminState.editingProduct.name = name;
+                adminState.editingProduct.price = price;
+                adminState.editingProduct.originalPrice = originalPrice;
+                adminState.editingProduct.category = category;
+                adminState.editingProduct.stock = stock;
+                adminState.editingProduct.description = description;
+                adminState.editingProduct.image = image;
+                adminState.editingProduct.inStock = stock > 0;
+                adminState.editingProduct.rating = 4.5; // Reset rating on edit
+            } else {
+                // Add new product
+                const newProduct = {
+                    id: Math.max(...adminState.products.map(p => p.id)) + 1,
+                    name,
+                    price,
+                    originalPrice,
+                    category,
+                    stock,
+                    description,
+                    image: image || "https://placehold.co/300x300/e0e0e0/333333?text=No+Image",
+                    rating: 4.5,
+                    inStock: stock > 0,
+                    createdAt: new Date().toISOString().split('T')[0]
+                };
+                adminState.products.push(newProduct);
+            }
+            
+            saveData();
+            hideProductForm();
+            showToast(adminState.editingProduct ? 'Product updated successfully!' : 'Product added successfully!');
+            render();
+        }
+
+        function showAddUserForm() {
+            adminState.editingUser = null;
+            document.getElementById('userForm').classList.remove('hidden');
+            // Reset form fields
+            document.getElementById('userName').value = '';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('userRole').value = 'customer';
+            document.getElementById('userStatus').value = 'active';
+            if (document.getElementById('userPassword')) {
+                document.getElementById('userPassword').value = '';
+            }
+        }
+
+        function hideUserForm() {
+            document.getElementById('userForm').classList.add('hidden');
+        }
+
+        function editUser(userId) {
+            adminState.editingUser = adminState.users.find(u => u.id === userId);
+            document.getElementById('userForm').classList.remove('hidden');
+            
+            // Populate form fields
+            document.getElementById('userName').value = adminState.editingUser.name;
+            document.getElementById('userEmail').value = adminState.editingUser.email;
+            document.getElementById('userRole').value = adminState.editingUser.role;
+            document.getElementById('userStatus').value = adminState.editingUser.status;
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                adminState.users = adminState.users.filter(u => u.id !== userId);
+                saveData();
+                showToast('User deleted successfully!');
+                render();
+            }
+        }
+
+        function saveUser(event) {
+            event.preventDefault();
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const role = document.getElementById('userRole').value;
+            const status = document.getElementById('userStatus').value;
+            
+            if (adminState.editingUser) {
+                // Update existing user
+                adminState.editingUser.name = name;
+                adminState.editingUser.email = email;
+                adminState.editingUser.role = role;
+                adminState.editingUser.status = status;
+            } else {
+                // Add new user
+                const password = document.getElementById('userPassword').value;
+                if (!password) {
+                    alert('Password is required for new users');
+                    return;
+                }
+                
+                const newUser = {
+                    id: Math.max(...adminState.users.map(u => u.id)) + 1,
+                    name,
+                    email,
+                    role,
+                    status,
+                    createdAt: new Date().toISOString().split('T')[0]
+                };
+                adminState.users.push(newUser);
+            }
+            
+            saveData();
+            hideUserForm();
+            showToast(adminState.editingUser ? 'User updated successfully!' : 'User added successfully!');
+            render();
+        }
+
+        function showAddCategoryForm() {
+            adminState.editingCategory = null;
+            document.getElementById('categoryForm').classList.remove('hidden');
+            // Reset form fields
+            document.getElementById('categoryName').value = '';
+            document.getElementById('categoryColor').value = 'bg-green-100 text-green-800';
+        }
+
+        function hideCategoryForm() {
+            document.getElementById('categoryForm').classList.add('hidden');
+        }
+
+        function editCategory(categoryId) {
+            adminState.editingCategory = adminState.categories.find(c => c.id === categoryId);
+            document.getElementById('categoryForm').classList.remove('hidden');
+            
+            // Populate form fields
+            document.getElementById('categoryName').value = adminState.editingCategory.name;
+            document.getElementById('categoryColor').value = adminState.editingCategory.color;
+        }
+
+        function deleteCategory(categoryId) {
+            if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+                // Check if any products are using this category
+                const category = adminState.categories.find(c => c.id === categoryId);
+                const productsInCategory = adminState.products.filter(p => p.category === category.name.toLowerCase());
+                
+                if (productsInCategory.length > 0) {
+                    alert(`Cannot delete category "${category.name}" because it has ${productsInCategory.length} products assigned to it. Please reassign these products to another category first.`);
+                    return;
+                }
+                
+                adminState.categories = adminState.categories.filter(c => c.id !== categoryId);
+                saveData();
+                showToast('Category deleted successfully!');
+                render();
+            }
+        }
+
+        function saveCategory(event) {
+            event.preventDefault();
+            const name = document.getElementById('categoryName').value;
+            const color = document.getElementById('categoryColor').value;
+            
+            if (adminState.editingCategory) {
+                // Update existing category
+                adminState.editingCategory.name = name;
+                adminState.editingCategory.color = color;
+            } else {
+                // Add new category
+                const newCategory = {
+                    id: Math.max(...adminState.categories.map(c => c.id)) + 1,
+                    name,
+                    count: 0,
+                    color
+                };
+                adminState.categories.push(newCategory);
+            }
+            
+            saveData();
+            hideCategoryForm();
+            showToast(adminState.editingCategory ? 'Category updated successfully!' : 'Category added successfully!');
+            render();
+        }
+
+        function viewOrder(orderId) {
+            const order = adminState.orders.find(o => o.id === orderId);
+            if (order) {
+                document.getElementById('orderNumber').textContent = order.id;
+                document.getElementById('customerName').textContent = order.customer;
+                document.getElementById('customerEmail').textContent = order.email;
+                document.getElementById('customerPhone').textContent = order.phone;
+                document.getElementById('customerAddress').textContent = order.address;
+                document.getElementById('orderDate').textContent = order.date;
+                document.getElementById('orderTotal').textContent = order.total;
+                document.getElementById('modalTotal').textContent = order.total;
+                
+                // Update status badge
+                const statusBadge = document.getElementById('orderStatus');
+                statusBadge.textContent = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+                statusBadge.className = 'px-2 py-1 rounded-full text-xs ' + 
+                    (order.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                     order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : 
+                     order.status === 'shipped' ? 'bg-blue-100 text-blue-800' : 
+                     order.status === 'pending' ? 'bg-gray-100 text-gray-800' : 'bg-red-100 text-red-800');
+                
+                // Populate order items
+                const orderItemsContainer = document.getElementById('orderItems');
+                orderItemsContainer.innerHTML = '';
+                
+                // For demo purposes, we'll create random items based on the order
+                const productNames = ['Organic Apples', 'Premium Bananas', 'Juicy Oranges', 'Strawberry Basket', 'Blueberry Pack'];
+                let subtotal = 0;
+                let itemCount = 0;
+                
+                for (let i = 0; i < order.items; i++) {
+                    const productName = productNames[Math.floor(Math.random() * productNames.length)];
+                    const price = [2.99, 1.49, 3.29, 5.99, 4.99][Math.floor(Math.random() * 5)];
+                    const quantity = Math.floor(Math.random() * 3) + 1;
+                    const total = price * quantity;
+                    subtotal += total;
+                    itemCount += quantity;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-2 text-sm">${productName}</td>
+                        <td class="px-4 py-2 text-sm">${quantity}</td>
+                        <td class="px-4 py-2 text-sm">$${price.toFixed(2)}</td>
+                        <td class="px-4 py-2 text-sm font-medium">$${total.toFixed(2)}</td>
+                    `;
+                    orderItemsContainer.appendChild(row);
+                }
+                
+                // Calculate and display totals
+                const shipping = 5.00;
+                const taxRate = adminState.settings.taxRate / 100;
+                const tax = subtotal * taxRate;
+                const total = subtotal + shipping + tax;
+                
+                document.getElementById('orderSubtotal').textContent = subtotal.toFixed(2);
+                document.getElementById('orderShipping').textContent = shipping.toFixed(2);
+                document.getElementById('orderTax').textContent = tax.toFixed(2);
+                document.getElementById('modalTotal').textContent = total.toFixed(2);
+                
+                // Reset status dropdown
+                document.getElementById('statusUpdateSelect').value = '';
+                
+                document.getElementById('orderModal').classList.remove('hidden');
+            }
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.add('hidden');
+        }
+
+        function updateOrderStatus(orderId) {
+            const order = adminState.orders.find(o => o.id === orderId);
+            if (order) {
+                const newStatus = prompt(`Update order status for #${orderId}\nCurrent: ${order.status}\n\nEnter new status (pending, processing, shipped, completed, cancelled):`, order.status);
+                
+                if (newStatus && ['pending', 'processing', 'shipped', 'completed', 'cancelled'].includes(newStatus.toLowerCase())) {
+                    order.status = newStatus.toLowerCase();
+                    saveData();
+                    showToast(`Order #${orderId} status updated to ${newStatus}!`);
+                    render();
+                }
+            }
+        }
+
+        function updateOrderStatusFromModal() {
+            const select = document.getElementById('statusUpdateSelect');
+            const orderId = parseInt(document.getElementById('orderNumber').textContent);
+            
+            if (select.value) {
+                const order = adminState.orders.find(o => o.id === orderId);
+                if (order) {
+                    order.status = select.value;
+                    saveData();
+                    showToast(`Order #${orderId} status updated to ${select.value}!`);
+                    closeOrderModal();
+                    render();
+                }
+            }
+        }
+
+        function deleteOrder(orderId) {
+            if (confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+                adminState.orders = adminState.orders.filter(o => o.id !== orderId);
+                saveData();
+                showToast('Order deleted successfully!');
+                render();
+            }
+        }
+
+        function saveSettings(event) {
+            event.preventDefault();
+            adminState.settings.siteName = document.getElementById('siteName').value;
+            adminState.settings.contactEmail = document.getElementById('contactEmail').value;
+            adminState.settings.phone = document.getElementById('phone').value;
+            adminState.settings.address = document.getElementById('address').value;
+            adminState.settings.currency = document.getElementById('currency').value;
+            adminState.settings.taxRate = parseFloat(document.getElementById('taxRate').value);
+            adminState.settings.shippingCost = parseFloat(document.getElementById('shippingCost').value);
+            adminState.settings.enableNewsletter = document.getElementById('enableNewsletter').checked;
+            adminState.settings.socialFacebook = document.getElementById('socialFacebook').value;
+            adminState.settings.socialTwitter = document.getElementById('socialTwitter').value;
+            adminState.settings.socialInstagram = document.getElementById('socialInstagram').value;
+            
+            saveData();
+            showToast('Settings saved successfully!');
+        }
+
+        function resetSettings() {
+            if (confirm('Are you sure you want to reset all settings to default values?')) {
+                adminState.settings = {
+                    siteName: "FreshFruit",
+                    contactEmail: "info@freshfruit.com",
+                    phone: "+1 (555) 123-4567",
+                    address: "123 Farm Road, Fruitville, CA 90210",
+                    currency: "USD",
+                    taxRate: 8.5,
+                    shippingCost: 5.00,
+                    enableNewsletter: true,
+                    socialFacebook: "https://facebook.com/freshfruit",
+                    socialTwitter: "https://twitter.com/freshfruit",
+                    socialInstagram: "https://instagram.com/freshfruit"
+                };
+                
+                // Repopulate form fields
+                document.getElementById('siteName').value = adminState.settings.siteName;
+                document.getElementById('contactEmail').value = adminState.settings.contactEmail;
+                document.getElementById('phone').value = adminState.settings.phone;
+                document.getElementById('address').value = adminState.settings.address;
+                document.getElementById('currency').value = adminState.settings.currency;
+                document.getElementById('taxRate').value = adminState.settings.taxRate;
+                document.getElementById('shippingCost').value = adminState.settings.shippingCost;
+                document.getElementById('enableNewsletter').checked = adminState.settings.enableNewsletter;
+                document.getElementById('socialFacebook').value = adminState.settings.socialFacebook;
+                document.getElementById('socialTwitter').value = adminState.settings.socialTwitter;
+                document.getElementById('socialInstagram').value = adminState.settings.socialInstagram;
+                
+                saveData();
+                showToast('Settings reset to default values!');
+            }
+        }
+
+        // Filtering functions
+        function filterProducts(searchTerm) {
+            const tableBody = document.getElementById('productsTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const productName = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+                const category = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                
+                if (productName.includes(searchTerm.toLowerCase()) || category.includes(searchTerm.toLowerCase())) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function filterByCategory(category) {
+            const tableBody = document.getElementById('productsTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const productCategory = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                
+                if (category === '' || productCategory === category) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function filterByStatus(status) {
+            const tableBody = document.getElementById('productsTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const inStock = rows[i].getElementsByTagName('td')[4].textContent === 'In Stock';
+                
+                if (status === '') {
+                    rows[i].style.display = '';
+                } else if (status === 'in-stock' && inStock) {
+                    rows[i].style.display = '';
+                } else if (status === 'out-of-stock' && !inStock) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function filterOrders(searchTerm) {
+            const tableBody = document.getElementById('ordersTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const orderId = rows[i].getElementsByTagName('td')[0].textContent;
+                const customer = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                
+                if (orderId.includes(searchTerm) || customer.includes(searchTerm.toLowerCase())) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function filterOrdersByStatus(status) {
+            const tableBody = document.getElementById('ordersTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const orderStatus = rows[i].getElementsByTagName('td')[5].textContent.toLowerCase();
+                
+                if (status === '' || orderStatus === status) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function filterUsers(searchTerm) {
+            const tableBody = document.getElementById('usersTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const userName = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+                const email = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                
+                if (userName.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function filterUsersByRole(role) {
+            const tableBody = document.getElementById('usersTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const userRole = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                
+                if (role === '' || userRole === role) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function filterUsersByStatus(status) {
+            const tableBody = document.getElementById('usersTableBody');
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const userStatus = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
+                
+                if (status === '' || userStatus === status) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        // Render the entire admin panel
+        function render() {
+            const app = document.getElementById('app');
+            
+            app.innerHTML = `
+                ${renderSidebar()}
+                <div class="main-content ${adminState.sidebarCollapsed ? 'main-content-collapsed' : 'main-content-expanded'}">
+                    ${renderHeader()}
+                    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        ${adminState.activeTab === 'dashboard' ? renderDashboard() : 
+                          adminState.activeTab === 'products' ? renderProducts() : 
+                          adminState.activeTab === 'orders' ? renderOrders() : 
+                          adminState.activeTab === 'users' ? renderUsers() : 
+                          adminState.activeTab === 'categories' ? renderCategories() : 
+                          adminState.activeTab === 'analytics' ? renderAnalytics() : 
+                          renderSettings()}
+                    </main>
+                </div>
+            `;
+
+            // Re-initialize Lucide icons after rendering
+            lucide.createIcons();
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
+```

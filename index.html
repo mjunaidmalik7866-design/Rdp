@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YBT Store - Premium E-commerce</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-shopping-bag brand-icon"></i>
+                <h1>YBT STORE</h1>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="#home" class="nav-link active">Home</a></li>
+                    <li><a href="#products" class="nav-link">Products</a></li>
+                    <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
+                    <li><a href="#about" class="nav-link">About</a></li>
+                    <li><a href="#contact" class="nav-link">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="nav-actions">
+                <div class="search-container">
+                    <input type="text" placeholder="Search products..." class="search-input" id="searchInput">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <button class="cart-btn" onclick="toggleCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </button>
+                <div class="user-menu">
+                    <button class="user-btn" id="userBtn" onclick="toggleUserMenu()">
+                        <i class="fas fa-user"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-info" id="userInfo" style="display: none;">
+                            <img src="" alt="Profile" class="user-avatar" id="userAvatar">
+                            <span class="user-name" id="userName"></span>
+                        </div>
+                        <div class="auth-buttons" id="authButtons">
+                            <button class="login-btn" onclick="showLogin()">Login</button>
+                            <button class="register-btn" onclick="showRegister()">Register</button>
+                        </div>
+                        <div class="user-actions" id="userActions" style="display: none;">
+                            <a href="#profile" onclick="showProfile()"><i class="fas fa-user-circle"></i> Profile</a>
+                            <a href="#orders" onclick="showOrders()"><i class="fas fa-box"></i> Orders</a>
+                            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h2 class="hero-title">Welcome to YBT Store</h2>
+                    <p class="hero-subtitle">Discover amazing products at unbeatable prices</p>
+                    <div class="hero-actions">
+                        <button class="btn-primary" onclick="scrollToSection('products')">Shop Now</button>
+                        <button class="btn-secondary" onclick="scrollToSection('about')">Learn More</button>
+                    </div>
+                </div>
+                <div class="hero-banner">
+                    <div class="sale-banner">
+                        <div class="sale-content">
+                            <span class="sale-badge">LIMITED TIME OFFER</span>
+                            <h3 class="sale-title">SUPER SALE</h3>
+                            <span class="sale-discount">50% OFF!</span>
+                            <button class="sale-btn">SHOP NOW</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Categories Section -->
+        <section class="categories">
+            <div class="container">
+                <div class="category-grid">
+                    <div class="category-card" onclick="filterProducts('electronics')">
+                        <div class="category-icon">
+                            <i class="fas fa-laptop"></i>
+                        </div>
+                        <h3>Electronics</h3>
+                    </div>
+                    <div class="category-card" onclick="filterProducts('phones')">
+                        <div class="category-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h3>Phones</h3>
+                    </div>
+                    <div class="category-card" onclick="filterProducts('headphones')">
+                        <div class="category-icon">
+                            <i class="fas fa-headphones"></i>
+                        </div>
+                        <h3>Headphones</h3>
+                    </div>
+                    <div class="category-card" onclick="filterProducts('laptops')">
+                        <div class="category-icon">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                        <h3>Laptops</h3>
+                    </div>
+                    <div class="category-card" onclick="filterProducts('accessories')">
+                        <div class="category-icon">
+                            <i class="fas fa-plug"></i>
+                        </div>
+                        <h3>Accessories</h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="products" class="products-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Featured Products</h2>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="filterProducts('all')">All</button>
+                        <button class="filter-btn" onclick="filterProducts('phones')">Phones</button>
+                        <button class="filter-btn" onclick="filterProducts('laptops')">Laptops</button>
+                        <button class="filter-btn" onclick="filterProducts('headphones')">Headphones</button>
+                        <button class="filter-btn" onclick="filterProducts('electronics')">Electronics</button>
+                    </div>
+                </div>
+                <div class="products-grid" id="productsGrid">
+                    <!-- Products will be loaded here dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="dashboard-section" style="display: none;">
+            <div class="container">
+                <div class="dashboard-header">
+                    <h2>Welcome back, <span id="dashboardUserName">User</span>!</h2>
+                    <p>Manage your account and track your orders</p>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-box"></i> Recent Orders</h3>
+                        </div>
+                        <div class="card-content" id="recentOrders">
+                            <p>No recent orders found.</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-heart"></i> Wishlist</h3>
+                        </div>
+                        <div class="card-content" id="wishlistItems">
+                            <p>Your wishlist is empty.</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-user-circle"></i> Account Info</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="account-info">
+                                <p><strong>Email:</strong> <span id="userEmail">user@example.com</span></p>
+                                <p><strong>Member since:</strong> <span id="memberSince">January 2024</span></p>
+                                <button class="btn-secondary" onclick="showProfile()">Edit Profile</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Shopping Cart Sidebar -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Shopping Cart</h3>
+            <button class="close-cart" onclick="toggleCart()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="cart-content">
+            <div class="cart-items" id="cartItems">
+                <p class="empty-cart">Your cart is empty</p>
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span id="cartSubtotal">$0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Shipping:</span>
+                        <span id="cartShipping">$0.00</span>
+                    </div>
+                    <div class="total-row total-final">
+                        <span>Total:</span>
+                        <span id="cartTotal">$0.00</span>
+                    </div>
+                </div>
+                <div class="cart-actions">
+                    <button class="btn-secondary" onclick="clearCart()">Clear Cart</button>
+                    <button class="btn-primary" onclick="proceedToCheckout()">Checkout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Login to Your Account</h3>
+                <button class="close-modal" onclick="closeModal('loginModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Login</button>
+                        <a href="#" onclick="showForgotPassword()">Forgot Password?</a>
+                    </div>
+                </form>
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                <button class="btn-google" onclick="loginWithGoogle()">
+                    <i class="fab fa-google"></i>
+                    Continue with Google
+                </button>
+                <p class="auth-switch">
+                    Don't have an account? <a href="#" onclick="switchToRegister()">Sign up</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Your Account</h3>
+                <button class="close-modal" onclick="closeModal('registerModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="registerName">Full Name</label>
+                        <input type="text" id="registerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Create Account</button>
+                    </div>
+                </form>
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                <button class="btn-google" onclick="registerWithGoogle()">
+                    <i class="fab fa-google"></i>
+                    Sign up with Google
+                </button>
+                <p class="auth-switch">
+                    Already have an account? <a href="#" onclick="switchToLogin()">Sign in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>My Profile</h3>
+                <button class="close-modal" onclick="closeModal('profileModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="profile-tabs">
+                    <button class="tab-btn active" onclick="showTab('profile-info')">Profile Info</button>
+                    <button class="tab-btn" onclick="showTab('addresses')">Addresses</button>
+                    <button class="tab-btn" onclick="showTab('order-history')">Order History</button>
+                </div>
+                <div class="tab-content">
+                    <div id="profile-info" class="tab-pane active">
+                        <form id="profileForm" onsubmit="updateProfile(event)">
+                            <div class="form-group">
+                                <label for="profileName">Full Name</label>
+                                <input type="text" id="profileName">
+                            </div>
+                            <div class="form-group">
+                                <label for="profileEmail">Email</label>
+                                <input type="email" id="profileEmail" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="profilePhone">Phone Number</label>
+                                <input type="tel" id="profilePhone">
+                            </div>
+                            <button type="submit" class="btn-primary">Update Profile</button>
+                        </form>
+                    </div>
+                    <div id="addresses" class="tab-pane">
+                        <div class="addresses-list" id="addressesList">
+                            <p>No addresses saved yet.</p>
+                        </div>
+                        <button class="btn-primary" onclick="addNewAddress()">Add New Address</button>
+                    </div>
+                    <div id="order-history" class="tab-pane">
+                        <div class="orders-list" id="ordersList">
+                            <p>No orders found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content checkout-content">
+            <div class="modal-header">
+                <h3>Checkout</h3>
+                <button class="close-modal" onclick="closeModal('checkoutModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="checkout-steps">
+                    <div class="step active" data-step="1">
+                        <span class="step-number">1</span>
+                        <span class="step-title">Shipping Info</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <span class="step-number">2</span>
+                        <span class="step-title">Payment</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <span class="step-number">3</span>
+                        <span class="step-title">Confirmation</span>
+                    </div>
+                </div>
+                
+                <div class="checkout-content-area">
+                    <!-- Step 1: Shipping Information -->
+                    <div id="checkout-step-1" class="checkout-step active">
+                        <h4>Shipping Information</h4>
+                        <form id="shippingForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="shippingName">Full Name</label>
+                                    <input type="text" id="shippingName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="shippingEmail">Email</label>
+                                    <input type="email" id="shippingEmail" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="shippingPhone">Phone Number</label>
+                                    <input type="tel" id="shippingPhone" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="shippingPostal">Postal Code</label>
+                                    <input type="text" id="shippingPostal" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="shippingAddress">Street Address</label>
+                                <input type="text" id="shippingAddress" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="shippingCity">City</label>
+                                    <input type="text" id="shippingCity" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="shippingState">State/Province</label>
+                                    <input type="text" id="shippingState" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="shippingCountry">Country</label>
+                                <select id="shippingCountry" required>
+                                    <option value="">Select Country</option>
+                                    <option value="PK">Pakistan</option>
+                                    <option value="US">United States</option>
+                                    <option value="UK">United Kingdom</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="AU">Australia</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn-primary" onclick="nextCheckoutStep()">Continue to Payment</button>
+                        </form>
+                    </div>
+
+                    <!-- Step 2: Payment Information -->
+                    <div id="checkout-step-2" class="checkout-step">
+                        <h4>Payment Method</h4>
+                        <div class="payment-methods">
+                            <div class="payment-option">
+                                <input type="radio" id="jazzcash" name="paymentMethod" value="jazzcash">
+                                <label for="jazzcash" class="payment-label">
+                                    <div class="payment-icon">💳</div>
+                                    <div class="payment-info">
+                                        <h5>JazzCash</h5>
+                                        <p>Pay with JazzCash mobile wallet</p>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="payment-option">
+                                <input type="radio" id="easypaisa" name="paymentMethod" value="easypaisa">
+                                <label for="easypaisa" class="payment-label">
+                                    <div class="payment-icon">📱</div>
+                                    <div class="payment-info">
+                                        <h5>EasyPaisa</h5>
+                                        <p>Pay with EasyPaisa mobile wallet</p>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="payment-option">
+                                <input type="radio" id="bank" name="paymentMethod" value="bank">
+                                <label for="bank" class="payment-label">
+                                    <div class="payment-icon">🏦</div>
+                                    <div class="payment-info">
+                                        <h5>Bank Transfer</h5>
+                                        <p>Direct bank account transfer</p>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="payment-option">
+                                <input type="radio" id="cod" name="paymentMethod" value="cod">
+                                <label for="cod" class="payment-label">
+                                    <div class="payment-icon">💵</div>
+                                    <div class="payment-info">
+                                        <h5>Cash on Delivery</h5>
+                                        <p>Pay when you receive your order</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="payment-details" id="paymentDetails">
+                            <!-- Payment details will be shown based on selected method -->
+                        </div>
+                        <div class="checkout-actions">
+                            <button type="button" class="btn-secondary" onclick="prevCheckoutStep()">Back</button>
+                            <button type="button" class="btn-primary" onclick="nextCheckoutStep()">Review Order</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Order Confirmation -->
+                    <div id="checkout-step-3" class="checkout-step">
+                        <h4>Order Summary</h4>
+                        <div class="order-summary">
+                            <div class="summary-items" id="summaryItems">
+                                <!-- Order items will be displayed here -->
+                            </div>
+                            <div class="summary-totals">
+                                <div class="total-row">
+                                    <span>Subtotal:</span>
+                                    <span id="summarySubtotal">$0.00</span>
+                                </div>
+                                <div class="total-row">
+                                    <span>Shipping:</span>
+                                    <span id="summaryShipping">$5.00</span>
+                                </div>
+                                <div class="total-row">
+                                    <span>Tax:</span>
+                                    <span id="summaryTax">$0.00</span>
+                                </div>
+                                <div class="total-row total-final">
+                                    <span>Total:</span>
+                                    <span id="summaryTotal">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="checkout-actions">
+                            <button type="button" class="btn-secondary" onclick="prevCheckoutStep()">Back</button>
+                            <button type="button" class="btn-primary" onclick="placeOrder()">Place Order</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <i class="toast-icon"></i>
+            <span class="toast-message"></span>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

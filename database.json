@@ -13,7 +13,18 @@
   ],
   "products": [
     {
-      "id": "P001",
+      "id": "P123",
+      "name": "Boat Rockerz 450 Bluetooth Headphones",
+      "price": 1499,
+      "imageUrl": "https://example.com/boat450.png",
+      "category": "Headphones",
+      "rating": 4.5,
+      "description": "Powerful bass and 15 hours backup headphones.",
+      "stock": 60,
+      "features": ["15 Hours Playback", "Wireless", "Deep Bass", "Comfortable Fit"]
+    },
+    {
+      "id": "P456",
       "name": "Samsung S24 Ultra",
       "price": 450000,
       "imageUrl": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop",
@@ -33,17 +44,6 @@
       "description": "Mediatek Processor Helio G85 with excellent battery life and modern design.",
       "stock": 40,
       "features": ["128GB Storage", "8GB RAM", "50MP Camera", "5000mAh Battery"]
-    },
-    {
-      "id": "P003",
-      "name": "Boat Rockerz 450 Bluetooth Headphones",
-      "price": 1499,
-      "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-      "category": "Headphones",
-      "rating": 4.5,
-      "description": "Powerful bass and 15 hours backup headphones with wireless connectivity.",
-      "stock": 60,
-      "features": ["15 Hours Playback", "Wireless", "Deep Bass", "Comfortable Fit"]
     },
     {
       "id": "P004",
@@ -84,12 +84,12 @@
       "id": "ORD001",
       "userId": "U23dH4K58sP",
       "products": [
-        {"productId": "P003", "quantity": 2},
-        {"productId": "P006", "quantity": 1}
+        {"productId": "P123", "quantity": 2},
+        {"productId": "P456", "quantity": 1}
       ],
-      "totalPrice": 37998,
+      "totalPrice": 3498,
       "address": "123, Gandhi Nagar, Bhopal, India",
-      "orderDate": "2024-04-28T19:30:00Z",
+      "orderDate": "28 April 2025, 7:30 PM",
       "status": "Pending",
       "paymentMethod": "JazzCash",
       "trackingId": "TRK123456789"

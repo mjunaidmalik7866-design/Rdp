@@ -1059,7 +1059,32 @@
     </div>
 
     <script>
-        // ===== ADMIN DATABASE (Connected to main YBT Store) =====
+        // ===== FIREBASE CONFIGURATION (Same as main store) =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyCSo7ZRzrXhygbwaXS6Rjcxyy1Gvx6xtbQ",
+            authDomain: "ybt-store-88775.firebaseapp.com",
+            projectId: "ybt-store-88775",
+            storageBucket: "ybt-store-88775.firebasestorage.app",
+            messagingSenderId: "810436370134",
+            appId: "1:810436370134:web:fa244b7cfb0e118a80b377",
+            measurementId: "G-842NKLC8V6"
+        };
+
+        // Firebase initialization
+        let firebaseApp = null;
+        let auth = null;
+        let db = null;
+
+        try {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            console.log('✅ Firebase initialized successfully in admin panel');
+        } catch (error) {
+            console.log('Using local database simulation');
+        }
+
+        // ===== ADMIN DATABASE (Connected to main YBT Store with exact schema) =====
         let adminDatabase = {
             users: [
                 {
@@ -1075,7 +1100,23 @@
             ],
             products: [
                 {
-                    id: "P001",
+                    id: "P123",
+                    name: "Boat Rockerz 450 Bluetooth Headphones",
+                    price: 1499,
+                    imageUrl: "https://example.com/boat450.png",
+                    thumbnails: [
+                        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400&h=400&fit=crop"
+                    ],
+                    category: "Headphones",
+                    rating: 4.5,
+                    description: "Powerful bass and 15 hours backup headphones.",
+                    stock: 60,
+                    features: ["15 Hours Playback", "Wireless", "Deep Bass", "Comfortable Fit"]
+                },
+                {
+                    id: "P456",
                     name: "Samsung S24 Ultra RS = 450000",
                     price: 450000,
                     imageUrl: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop",
@@ -1107,20 +1148,52 @@
                     features: ["128GB Storage", "8GB RAM", "50MP Camera", "5000mAh Battery"]
                 },
                 {
-                    id: "P003",
-                    name: "Boat Rockerz 450 Bluetooth Headphones",
-                    price: 1499,
-                    imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+                    id: "P004",
+                    name: "MacBook Pro M3",
+                    price: 250000,
+                    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop",
                     thumbnails: [
-                        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&h=400&fit=crop"
+                    ],
+                    category: "Laptops",
+                    rating: 4.9,
+                    description: "Professional laptop with M3 chip, perfect for developers and creators.",
+                    stock: 15,
+                    features: ["M3 Chip", "16GB RAM", "512GB SSD", "Retina Display"]
+                },
+                {
+                    id: "P005",
+                    name: "Dell XPS 13",
+                    price: 120000,
+                    imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop",
+                    thumbnails: [
+                        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop"
+                    ],
+                    category: "Laptops",
+                    rating: 4.6,
+                    description: "Ultra-portable laptop with stunning display and premium build quality.",
+                    stock: 20,
+                    features: ["Intel i7", "16GB RAM", "512GB SSD", "13.3 Display"]
+                },
+                {
+                    id: "P006",
+                    name: "Sony WH-1000XM5",
+                    price: 35000,
+                    imageUrl: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=400&fit=crop",
+                    thumbnails: [
                         "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=400&fit=crop",
-                        "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400&h=400&fit=crop"
+                        "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop"
                     ],
                     category: "Headphones",
-                    rating: 4.5,
-                    description: "Powerful bass and 15 hours backup headphones.",
-                    stock: 60,
-                    features: ["15 Hours Playback", "Wireless", "Deep Bass", "Comfortable Fit"]
+                    rating: 4.8,
+                    description: "Industry-leading noise cancellation with premium sound quality.",
+                    stock: 30,
+                    features: ["Noise Cancellation", "30 Hours Battery", "Premium Sound", "Touch Controls"]
                 }
             ],
             orders: [
@@ -1131,15 +1204,15 @@
                     customerEmail: "malikhassab4@gmail.com",
                     customerPhone: "+92 300 1234567",
                     products: [
-                        {"productId": "P003", "quantity": 2},
-                        {"productId": "P001", "quantity": 1}
+                        {"productId": "P123", "quantity": 2},
+                        {"productId": "P456", "quantity": 1}
                     ],
-                    totalPrice: 452998,
+                    totalPrice: 3498,
                     address: "123, Gandhi Nagar",
                     city: "Bhopal",
                     postalCode: "462001",
                     fullAddress: "123, Gandhi Nagar, Bhopal, India",
-                    orderDate: "2024-04-28T19:30:00Z",
+                    orderDate: "28 April 2025, 7:30 PM",
                     orderStatus: "Pending",
                     paymentStatus: "Pending",
                     paymentMethod: "JazzCash",
@@ -1152,10 +1225,10 @@
                     orderId: "ORD001",
                     userId: "U23dH4K58sP",
                     customerName: "Junaid",
-                    amount: 452998,
+                    amount: 3498,
                     method: "JazzCash",
                     status: "Pending",
-                    date: "2024-04-28T19:30:00Z",
+                    date: "28 April 2025, 7:30 PM",
                     transactionId: "TXN123456789"
                 }
             ]

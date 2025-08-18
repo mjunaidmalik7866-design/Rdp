@@ -1,0 +1,35 @@
+{
+	"users": [
+		{
+			"uid": "U23dH4K58sP",
+			"name": "Junaid",
+			"email": "malikhassab4@gmail.com",
+			"photoUrl": "https://example.com/profile.png",
+			"address": "123, Gandhi Nagar, Bhopal, India"
+		}
+	],
+	"orders": [
+		{
+			"userId": "U23dH4K58sP",
+			"products": [
+				{ "productId": "P123", "quantity": 2 },
+				{ "productId": "P456", "quantity": 1 }
+			],
+			"totalPrice": 3498,
+			"address": "123, Gandhi Nagar, Bhopal, India",
+			"orderDate": "28 April 2025, 7:30 PM",
+			"status": "Pending"
+		}
+	],
+	"products": [
+		{
+			"id": "P123",
+			"name": "Boat Rockerz 450 Bluetooth Headphones",
+			"price": 1499,
+			"imageUrl": "https://example.com/boat450.png",
+			"category": "Headphones",
+			"rating": 4.5,
+			"description": "Powerful bass and 15 hours backup headphones."
+		}
+	]
+}

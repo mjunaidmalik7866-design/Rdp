@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>YBT Store</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+	<style>
+		body{font-family:Inter,system-ui,Arial,sans-serif;margin:0;background:#f6f7fb;color:#0f172a}
+		.container{max-width:1200px;margin:0 auto;padding:20px}
+		header{position:sticky;top:0;background:#ffffffcc;backdrop-filter:saturate(1.5) blur(8px);border-bottom:1px solid #e5e7eb;z-index:10}
+		.brand{display:flex;gap:10px;align-items:center;font-weight:800;color:#16a34a}
+		.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+		.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+		.card img{width:100%;height:170px;object-fit:cover;border-radius:10px;background:#f1f5f9}
+		.btn{background:#16a34a;border:none;color:#fff;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+		.btn.outline{background:#fff;color:#16a34a;border:2px solid #16a34a}
+		.badge{font-size:12px;background:#e2e8f0;color:#0f172a;border-radius:999px;padding:4px 10px;display:inline-block}
+		nav a{color:#0f172a;text-decoration:none;margin-right:16px;font-weight:700}
+		.hidden{display:none}
+		.input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px}
+		.form{max-width:420px;margin:20px auto;display:flex;flex-direction:column;gap:12px;background:#fff;padding:18px;border-radius:14px;border:1px solid #e5e7eb}
+		.toast{position:fixed;right:20px;top:20px;background:#16a34a;color:#fff;padding:12px 16px;border-radius:10px;opacity:0;transform:translateY(-8px);transition:all .25s}
+		.toast.show{opacity:1;transform:translateY(0)}
+	</style>
+</head>
+<body>
+	<header>
+		<div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+			<div class="brand">
+				<span style="font-size:24px">🛍️</span>
+				<span>YBT store</span>
+			</div>
+			<nav>
+				<a href="#" id="link-home">Home</a>
+				<a href="#" id="link-cart">Cart</a>
+				<a href="#" id="link-profile">Profile</a>
+			</nav>
+			<div id="auth-actions">
+				<button class="btn outline" id="btn-login">Login</button>
+				<button class="btn" id="btn-logout" class="hidden">Logout</button>
+			</div>
+		</div>
+	</header>
+
+	<div class="container">
+		<div id="home-view">
+			<h2 style="margin:12px 0 6px">Featured Products</h2>
+			<div id="products" class="grid"></div>
+		</div>
+
+		<div id="cart-view" class="hidden">
+			<h2>Cart</h2>
+			<div id="cart-items"></div>
+			<div id="cart-summary" style="margin-top:16px"></div>
+		</div>
+
+		<div id="profile-view" class="hidden">
+			<h2>My Profile</h2>
+			<div id="profile-content"></div>
+		</div>
+
+		<div id="auth-view" class="hidden">
+			<div class="form" id="form-login">
+				<h3>Login</h3>
+				<input class="input" id="login-email" type="email" placeholder="Email" />
+				<input class="input" id="login-password" type="password" placeholder="Password" />
+				<button class="btn" id="do-login">Login</button>
+				<button class="btn outline" id="goto-register" type="button">Create Account</button>
+				<button class="btn outline" id="goto-forgot" type="button">Forgot Password</button>
+			</div>
+
+			<div class="form hidden" id="form-register">
+				<h3>Create Account</h3>
+				<input class="input" id="reg-name" placeholder="Full Name" />
+				<input class="input" id="reg-email" type="email" placeholder="Email" />
+				<input class="input" id="reg-password" type="password" placeholder="Password" />
+				<button class="btn" id="do-register">Register</button>
+				<button class="btn outline" id="back-to-login-1" type="button">Back to Login</button>
+			</div>
+
+			<div class="form hidden" id="form-forgot">
+				<h3>Reset Password</h3>
+				<input class="input" id="fp-email" type="email" placeholder="Email" />
+				<button class="btn" id="do-reset">Send reset link</button>
+				<button class="btn outline" id="back-to-login-2" type="button">Back to Login</button>
+			</div>
+		</div>
+	</div>
+
+	<div class="toast" id="toast">Saved</div>
+
+	<script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+	<script src="assets/firebaseConfig.js"></script>
+	<script>
+		const API_BASE = 'http://localhost:4000/api';
+		const toast = (m)=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
+
+		const el = (id)=>document.getElementById(id);
+		const views = { home: el('home-view'), cart: el('cart-view'), profile: el('profile-view'), auth: el('auth-view') };
+		function show(view){ Object.values(views).forEach(v=>v.classList.add('hidden')); views[view].classList.remove('hidden'); }
+
+		let currentUser = null;
+
+		function setAuthUI(){
+			if(currentUser){
+				el('btn-login').classList.add('hidden');
+				el('btn-logout').classList.remove('hidden');
+			}else{
+				el('btn-login').classList.remove('hidden');
+				el('btn-logout').classList.add('hidden');
+			}
+		}
+
+		async function api(path, options={}){
+			const token = currentUser ? await currentUser.getIdToken() : null;
+			const res = await fetch(`${API_BASE}${path}`, { ...options, headers: { 'Content-Type':'application/json', ...(options.headers||{}), ...(token?{Authorization:`Bearer ${token}`}:{}) } });
+			if(!res.ok) throw new Error(await res.text());
+			return res.json();
+		}
+
+		async function loadProducts(){
+			const products = await api('/products');
+			const list = el('products');
+			list.innerHTML = '';
+			products.forEach(p=>{
+				const d=document.createElement('div');d.className='card';
+				d.innerHTML = `
+					<img src="${(p.images&&p.images[0])||'https://picsum.photos/seed/'+p._id+'/400/300'}" alt="${p.name}">
+					<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong>${p.name}</strong><span class="badge">${(p.categories||[])[0]||'General'}</span></div>
+					<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>₹ ${p.price}</span>
+						<button class="btn" data-id="${p._id}">Add to cart</button></div>`;
+				list.appendChild(d);
+				d.querySelector('button').addEventListener('click', ()=>addToCart(p._id,1));
+			});
+		}
+
+		async function addToCart(productId, quantity){
+			if(!currentUser){ show('auth'); return; }
+			await api('/cart', { method:'POST', body: JSON.stringify({ productId, quantity }) });
+			toast('Added to cart');
+		}
+
+		async function loadCart(){
+			if(!currentUser){ show('auth'); return; }
+			const cart = await api('/cart');
+			const container = el('cart-items');
+			container.innerHTML = '';
+			let subtotal = 0;
+			for(const item of cart.items){
+				const product = await api(`/products/${item.productId}`);
+				subtotal += product.price * item.quantity;
+				const row = document.createElement('div');
+				row.className='card';
+				row.innerHTML = `<div style="display:flex;gap:12px;align-items:center">
+					<img src="${(product.images&&product.images[0])||'https://picsum.photos/seed/'+product._id+'/400/300'}" style="width:100px;height:80px;object-fit:cover;border-radius:8px">
+					<div style="flex:1">
+						<div><strong>${product.name}</strong></div>
+						<div>₹ ${product.price}</div>
+					</div>
+					<div>
+						<input type="number" min="1" value="${item.quantity}" style="width:70px" />
+						<button class="btn outline" data-action="remove">Remove</button>
+					</div>
+				</div>`;
+				const qty = row.querySelector('input');
+				qty.addEventListener('change', async ()=>{ await api('/cart', { method:'PATCH', body: JSON.stringify({ productId: item.productId, quantity: Number(qty.value) })}); loadCart(); });
+				row.querySelector('[data-action="remove"]').addEventListener('click', async ()=>{ await api('/cart', { method:'DELETE', body: JSON.stringify({ productId: item.productId })}); loadCart(); });
+				container.appendChild(row);
+			}
+			const shipping = subtotal>0?99:0; const total = subtotal + shipping;
+			el('cart-summary').innerHTML = `<div class="card"><div>Subtotal: <strong>₹ ${subtotal.toFixed(2)}</strong></div><div>Shipping: <strong>₹ ${shipping.toFixed(2)}</strong></div><div>Total: <strong>₹ ${total.toFixed(2)}</strong></div>
+				<hr style="margin:10px 0"/>
+				<div>
+					<h4>Checkout</h4>
+					<input class="input" id="co-name" placeholder="Full Name" />
+					<input class="input" id="co-email" placeholder="Email" />
+					<input class="input" id="co-phone" placeholder="Phone" />
+					<input class="input" id="co-address" placeholder="Address" />
+					<input class="input" id="co-city" placeholder="City" />
+					<input class="input" id="co-postal" placeholder="Postal Code" />
+					<select class="input" id="co-method"><option value="jazzcash">JazzCash</option><option value="easypaisa">EasyPaisa</option><option value="bank">Bank Transfer</option></select>
+					<button class="btn" id="place-order">Place Order</button>
+				</div></div>`;
+			el('place-order').addEventListener('click', placeOrder);
+		}
+
+		async function placeOrder(){
+			const itemsCart = await api('/cart');
+			if(itemsCart.items.length===0){ toast('Cart is empty'); return; }
+			const payload = {
+				items: itemsCart.items.map(i=>({ productId: i.productId, quantity: i.quantity })),
+				shippingAddress: { name: el('co-name').value, email: el('co-email').value, phone: el('co-phone').value, address: el('co-address').value, city: el('co-city').value, postalCode: el('co-postal').value },
+				paymentMethod: el('co-method').value,
+				paymentReference: 'MOCK-'+Math.random().toString(36).slice(2,8)
+			};
+			await api('/orders', { method:'POST', body: JSON.stringify(payload) });
+			showSuccess();
+		}
+
+		function showSuccess(){
+			const c = el('cart-items');
+			c.innerHTML = `<div class="card" style="text-align:center; padding:40px">
+				<div style="font-size:64px">✅</div>
+				<h3>Order placed successfully!</h3>
+				<p>Thank you for shopping with us.</p>
+			</div>`;
+		}
+
+		async function renderProfile(){
+			if(!currentUser){ show('auth'); return; }
+			const me = await api('/users/me');
+			el('profile-content').innerHTML = `<div class="card"><div><strong>Name:</strong> ${me?.name||''}</div><div><strong>Email:</strong> ${me?.email||currentUser.email}</div></div>`;
+		}
+
+		// Navigation
+		el('link-home').onclick=(e)=>{e.preventDefault(); show('home'); }
+		el('link-cart').onclick=(e)=>{e.preventDefault(); show('cart'); loadCart(); }
+		el('link-profile').onclick=(e)=>{e.preventDefault(); show('profile'); renderProfile(); }
+		el('btn-login').onclick=()=>{show('auth');}
+		el('btn-logout').onclick=async()=>{ await firebase.auth().signOut(); }
+
+		// Auth forms
+		el('goto-register').onclick=()=>{ el('form-login').classList.add('hidden'); el('form-register').classList.remove('hidden'); el('form-forgot').classList.add('hidden'); }
+		el('goto-forgot').onclick=()=>{ el('form-login').classList.add('hidden'); el('form-register').classList.add('hidden'); el('form-forgot').classList.remove('hidden'); }
+		el('back-to-login-1').onclick=el('back-to-login-2').onclick=()=>{ el('form-login').classList.remove('hidden'); el('form-register').classList.add('hidden'); el('form-forgot').classList.add('hidden'); }
+		el('do-login').onclick=async()=>{
+			try{ await firebase.auth().signInWithEmailAndPassword(el('login-email').value, el('login-password').value); show('home'); toast('Welcome back'); }catch(e){ alert(e.message) }
+		}
+		el('do-register').onclick=async()=>{
+			try{
+				const cred = await firebase.auth().createUserWithEmailAndPassword(el('reg-email').value, el('reg-password').value);
+				await api('/users', { method:'POST', body: JSON.stringify({ firebaseUid: cred.user.uid, email: el('reg-email').value, name: el('reg-name').value }) });
+				show('home'); toast('Account created');
+			}catch(e){ alert(e.message) }
+		}
+		el('do-reset').onclick=async()=>{ try{ await firebase.auth().sendPasswordResetEmail(el('fp-email').value); toast('Email sent'); }catch(e){ alert(e.message) } }
+
+		firebase.auth().onAuthStateChanged(async (u)=>{
+			currentUser = u;
+			setAuthUI();
+			if(u){ try{ await api('/users/me'); }catch{ /* ignore */ } }
+		});
+
+		loadProducts();
+		show('home');
+	</script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+{
+  "users": [
+    {
+      "uid": "U23dH4K58sP",
+      "name": "Junaid",
+      "email": "malikhassab4@gmail.com",
+      "photoUrl": "https://example.com/profile.png",
+      "address": "123, Gandhi Nagar, Bhopal, India",
+      "phone": "+92 300 1234567",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "role": "user"
+    }
+  ],
+  "products": [
+    {
+      "id": "P123",
+      "name": "Boat Rockerz 450 Bluetooth Headphones",
+      "price": 1499,
+      "imageUrl": "https://example.com/boat450.png",
+      "category": "Headphones",
+      "rating": 4.5,
+      "description": "Powerful bass and 15 hours backup headphones.",
+      "stock": 60,
+      "features": ["15 Hours Playback", "Wireless", "Deep Bass", "Comfortable Fit"]
+    },
+    {
+      "id": "P456",
+      "name": "Samsung S24 Ultra",
+      "price": 450000,
+      "imageUrl": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop",
+      "category": "Mobiles",
+      "rating": 4.8,
+      "description": "Snapdragon Processor 8 Gen 3 with advanced camera system and S Pen functionality.",
+      "stock": 25,
+      "features": ["256GB Storage", "12GB RAM", "200MP Camera", "S Pen Included"]
+    },
+    {
+      "id": "P002",
+      "name": "Tecno Spark 20",
+      "price": 33100,
+      "imageUrl": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=400&fit=crop",
+      "category": "Mobiles",
+      "rating": 4.2,
+      "description": "Mediatek Processor Helio G85 with excellent battery life and modern design.",
+      "stock": 40,
+      "features": ["128GB Storage", "8GB RAM", "50MP Camera", "5000mAh Battery"]
+    },
+    {
+      "id": "P004",
+      "name": "MacBook Pro M3",
+      "price": 250000,
+      "imageUrl": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop",
+      "category": "Laptops",
+      "rating": 4.9,
+      "description": "Professional laptop with M3 chip, perfect for developers and creators.",
+      "stock": 15,
+      "features": ["M3 Chip", "16GB RAM", "512GB SSD", "Retina Display"]
+    },
+    {
+      "id": "P005",
+      "name": "Dell XPS 13",
+      "price": 120000,
+      "imageUrl": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop",
+      "category": "Laptops",
+      "rating": 4.6,
+      "description": "Ultra-portable laptop with stunning display and premium build quality.",
+      "stock": 20,
+      "features": ["Intel i7", "16GB RAM", "512GB SSD", "13.3 Display"]
+    },
+    {
+      "id": "P006",
+      "name": "Sony WH-1000XM5",
+      "price": 35000,
+      "imageUrl": "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=400&fit=crop",
+      "category": "Headphones",
+      "rating": 4.8,
+      "description": "Industry-leading noise cancellation with premium sound quality.",
+      "stock": 30,
+      "features": ["Noise Cancellation", "30 Hours Battery", "Premium Sound", "Touch Controls"]
+    }
+  ],
+  "orders": [
+    {
+      "id": "ORD001",
+      "userId": "U23dH4K58sP",
+      "products": [
+        {"productId": "P123", "quantity": 2},
+        {"productId": "P456", "quantity": 1}
+      ],
+      "totalPrice": 3498,
+      "address": "123, Gandhi Nagar, Bhopal, India",
+      "orderDate": "28 April 2025, 7:30 PM",
+      "status": "Pending",
+      "paymentMethod": "JazzCash",
+      "trackingId": "TRK123456789"
+    }
+  ],
+  "cart": []
+}
